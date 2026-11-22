@@ -18,6 +18,10 @@ Abrí `http://localhost:5173` en el navegador. En PowerShell, si cargaste anteri
 
 En **Menú del buffet**, cargá una foto de prueba, agregá los platos manualmente, marcá disponibilidad y confirmá la revisión antes de publicar. En **Conversaciones**, abrí el chat de demostración y simulá `MENÚ`, un pedido con nombre y cantidad de cada plato, `retiro` y `CONFIRMAR PEDIDO`. Para simular delivery, cargá también una ubicación ficticia con su referencia. El encargado toma el chat y registra el importe acordado antes de confirmar. Los datos de la demo se guardan en ese navegador. El botón **Restablecer demo** limpia esos datos.
 
+## Despliegue de Casa Central
+
+La rama para Netlify es `release/casa-central-buffet`. Seguí la [guía sin programación](docs/GUIA_DESPLIEGUE_CASA_CENTRAL.md) y registrá los resultados en el [checklist de entrega](docs/CHECKLIST_DESPLIEGUE_CASA_CENTRAL.md).
+
 ## Supabase exclusivo para Casa Central
 
 Creá un proyecto de prueba vacío para Casa Central. Ejecutá una vez las migraciones de `database/` en este orden:

@@ -1,3 +1,4 @@
+import {aiProviderFailure} from './ai-errors.mjs';
 import {providerConfig} from '../../shared/ai-provider.js';
 import {recoverCandidates,compactContext,validateInterpretation} from '../../shared/conversation-context.js';
 import {env,extractText} from './platform.mjs';import {recordUsage} from './ai-metrics.mjs';
@@ -8,10 +9,15 @@ export async function interpret(text,cart,catalog,settings){
  let candidates=recoverCandidates(text,cart,catalog);
  for(let attempt=0;attempt<2;attempt++){
   const context=JSON.stringify(compactContext(cart,candidates,settings));
-  const r=await fetch(endpoint,{method:'POST',redirect:'error',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model,instructions:rules+context,input:[{role:'user',content:text}],text:{format:{type:'json_schema',name:'pedido',strict:true,schema}},max_output_tokens:2000,store:false}),signal:AbortSignal.timeout(20000)});
-  if(!r.ok)throw Error('ai_unavailable');const data=await r.json();await recordUsage({model:typeof data.model==='string'?data.model:model,operation:'conversation',usage:data.usage,contextChars:context.length});
+  let r;
+  try{r=await fetch(endpoint,{method:'POST',redirect:'error',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({model,instructions:rules+context,input:[{role:'user',content:text}],text:{format:{type:'json_schema',name:'pedido',strict:true,schema}},max_output_tokens:2000,store:false}),signal:AbortSignal.timeout(20000)});}
+  catch(error){throw Error(['TimeoutError','AbortError'].includes(error.name)?'ai_timeout':'ai_network');}
+  if(!r.ok)throw Error((await aiProviderFailure(r)).code);
+  const data=await r.json().catch(()=>null);
+  if(!data||typeof data!=='object'||Array.isArray(data)||(data.output!=null&&!Array.isArray(data.output)))throw Error('invalid_interpretation');
+ await recordUsage({model:typeof data.model==='string'?data.model:model,operation:'conversation',usage:data.usage,contextChars:context.length});
   if(data.status&&data.status!=='completed'||data.error||(data.output||[]).some(o=>(o.content||[]).some(c=>c.type==='refusal')))throw Error('invalid_interpretation');
-  const command=JSON.parse(extractText(data));
+  let command;try{command=JSON.parse(extractText(data));}catch{throw Error('invalid_interpretation');}
   try{validateInterpretation(command,text,cart,catalog,candidates);}catch(error){if(attempt===0&&candidates.length<catalog.length){candidates=recoverCandidates(text,cart,catalog,{expanded:true});continue;}return {intent:'clarify',message:'No pude confirmar todos los productos y cantidades. Conservamos tu carrito. Indicá cada variedad o pedí ayuda al equipo.'};}
   if(command.intent==='help'&&attempt===0&&candidates.length<catalog.length){candidates=recoverCandidates(text,cart,catalog,{expanded:true});continue;}
   if(command.intent==='help')return {intent:'clarify',message:'¿Qué producto o variedad querés? Indicá cada artículo y su cantidad; el equipo puede ayudarte.'};

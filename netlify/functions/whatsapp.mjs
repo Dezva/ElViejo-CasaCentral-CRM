@@ -4,8 +4,12 @@ import {parseLocationMessage} from '../../shared/locations.js';
 export default async request=>{
  const url=new URL(request.url);
  if(request.method==='GET'){
-  if(url.searchParams.get('hub.mode')==='subscribe'&&env('WHATSAPP_VERIFY_TOKEN')&&url.searchParams.get('hub.verify_token')===env('WHATSAPP_VERIFY_TOKEN'))return new Response(url.searchParams.get('hub.challenge')||'');
-  return json({service:'Guarnipitan WhatsApp',ok:true,diagnostics_version:1,note:'Esta consulta GET solo comprueba que la función existe. Los mensajes reales llegan mediante POST desde Meta.'});
+  if(url.searchParams.has('hub.mode')){
+   const challenge=url.searchParams.get('hub.challenge');
+   if(url.searchParams.get('hub.mode')==='subscribe'&&challenge&&env('WHATSAPP_VERIFY_TOKEN')&&url.searchParams.get('hub.verify_token')===env('WHATSAPP_VERIFY_TOKEN'))return new Response(challenge);
+   return json({error:'webhook_verification_failed'},403);
+  }
+  return json({service:'Buffet El Viejo — Casa Central WhatsApp',ok:true,diagnostics_version:1,note:'Esta consulta GET solo comprueba que la función existe. Los mensajes reales llegan mediante POST desde Meta.'});
  }
  if(request.method!=='POST')return json({error:'method_not_allowed'},405);
  const raw=await request.text();if(raw.length>1000000)return json({error:'payload_too_large'},413);

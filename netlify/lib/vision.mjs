@@ -1,3 +1,4 @@
+import {aiProviderFailure} from './ai-errors.mjs';
 import {recordUsage} from './ai-metrics.mjs';
 import {createHash} from 'node:crypto';
 import {CATEGORY_IDS} from '../../shared/buffet-categories.js';
@@ -44,9 +45,13 @@ export async function recognizeImage(image,{config,fetchImpl=globalThis.fetch,ti
     if (['TimeoutError','AbortError'].includes(err.name)) throw visionError('vision_timeout','El reconocimiento superó el tiempo máximo. Podés reintentar o transcribir manualmente.',504);
     throw visionError('vision_network','No se pudo contactar al proveedor de visión. No se guardó ninguna propuesta.');
   }
-  if (!response.ok) throw visionError('vision_provider_error','El proveedor no pudo procesar la fotografía. Revisá su configuración o disponibilidad.',response.status===429?503:502);
+  if (!response.ok) {
+    const {code, message, status}=await aiProviderFailure(response);
+    throw visionError(code,message,status);
+  }
   let data;
   try { data=await response.json(); } catch { throw visionError('invalid_vision_response','El proveedor no devolvió JSON válido.'); }
+  if (!data || typeof data!=='object' || Array.isArray(data) || (data.output!=null&&!Array.isArray(data.output))) throw visionError('invalid_vision_response','El proveedor no devolvió una respuesta válida.');
   await recordUsage({model:typeof data.model==='string'?data.model:config.model,operation:'vision',usage:data.usage});
   if (data.status && data.status!=='completed' || data.error || (data.output||[]).some(o=>(o.content||[]).some(c=>c.type==='refusal'))) throw visionError('incomplete_vision_response','El proveedor rechazó o no completó el reconocimiento. No se guardó una propuesta parcial.');
   let proposal;

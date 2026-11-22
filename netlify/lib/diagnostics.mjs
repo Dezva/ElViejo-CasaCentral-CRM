@@ -2,7 +2,7 @@ import {env,db} from './platform.mjs';
 
 export function safeDiagnosticError(message){
  let text=String(message||'Error sin detalle');
- for(const name of ['WHATSAPP_TOKEN','META_APP_SECRET','WHATSAPP_VERIFY_TOKEN','SUPABASE_SECRET_KEY','OPENAI_API_KEY','WORKER_SECRET']){
+ for(const name of ['WHATSAPP_TOKEN','META_APP_SECRET','WHATSAPP_VERIFY_TOKEN','SUPABASE_SECRET_KEY','AI_API_KEY','OPENAI_API_KEY','WORKER_SECRET']){
   const secret=env(name);if(secret)text=text.replaceAll(secret,'[secreto oculto]');
  }
  return text.slice(0,450);

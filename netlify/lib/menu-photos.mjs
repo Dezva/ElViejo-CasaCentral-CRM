@@ -7,7 +7,7 @@ async function storage(path,options={}) {
  const base=env('SUPABASE_URL'),key=env('SUPABASE_SECRET_KEY');
  if(!base||!key)throw visionError('storage_not_configured','Falta configurar almacenamiento privado.',409);
  const headers={apikey:key,...(key.startsWith('eyJ')?{authorization:'Bearer '+key}:{}),...options.headers};
- return fetch(base+'/storage/v1/'+path,{...options,headers,signal:AbortSignal.timeout(15000)});
+ return fetch(base+'/storage/v1/'+path,{...options,headers,redirect:'error',signal:AbortSignal.timeout(15000)});
 }
 async function privateBucket() {
  if(!/^[a-z0-9-]{1,100}$/.test(bucket()))throw visionError('invalid_bucket','Configuración de almacenamiento inválida.',409);
