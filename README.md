@@ -2,7 +2,7 @@
 
 CRM de pedidos y conversaciones para el buffet de Casa Central, con menú diario sujeto a revisión humana. El encargado acuerda el precio final del pedido. La dirección de referencia es Ruta Guarambaré–Villeta, esquina Villetana, frente a IMPACO, Paraguay. La dirección, los días y horarios, la modalidad de delivery, las tarifas por kilogramo, las formas de pago y los datos de contacto siguen pendientes de confirmación.
 
-La base técnica proviene de `Dezva/Chiperia-CRM`, commit `284b3c449d7600aa76b4646972d49fac0ea99524`. Esta rama está en desarrollo. La suite heredada todavía incluye contratos de chipería que requieren adaptación. Validá la rama antes de desplegarla.
+La base técnica proviene de `Dezva/Chiperia-CRM`, commit `284b3c449d7600aa76b4646972d49fac0ea99524`. La V1.1 corrige regresiones de la adaptación y documenta la cobertura en [Validación V1.1](docs/validacion-v1.1.md).
 
 ## Demo local en Linux y Windows
 
@@ -14,7 +14,7 @@ pnpm build
 pnpm dev
 ```
 
-Abrí el puerto 5173 en el navegador. En PowerShell, si cargaste anteriormente las variables públicas de Supabase, podés construir la demo en una terminal nueva o quitar ambas del proceso con `Remove-Item Env:PUBLIC_SUPABASE_URL, Env:PUBLIC_SUPABASE_KEY -ErrorAction SilentlyContinue`.
+Abrí `http://localhost:5173` en el navegador. En PowerShell, si cargaste anteriormente las variables públicas de Supabase, podés construir la demo en una terminal nueva o quitar ambas del proceso con `Remove-Item Env:PUBLIC_SUPABASE_URL, Env:PUBLIC_SUPABASE_KEY -ErrorAction SilentlyContinue`.
 
 En **Menú del buffet**, cargá una foto de prueba, agregá los platos manualmente, marcá disponibilidad y confirmá la revisión antes de publicar. En **Conversaciones**, abrí el chat de demostración y simulá `MENÚ`, un pedido con nombre y cantidad de cada plato, `retiro` y `CONFIRMAR PEDIDO`. Para simular delivery, cargá también una ubicación ficticia con su referencia. El encargado toma el chat y registra el importe acordado antes de confirmar. Los datos de la demo se guardan en ese navegador. El botón **Restablecer demo** limpia esos datos.
 
@@ -30,6 +30,8 @@ Creá un proyecto de prueba vacío para Casa Central. Ejecutá una vez las migra
 | 4 | `013_metricas_ia.sql`, `014_avisos_pedidos.sql` |
 
 Los prefijos históricos de algunas tablas y migraciones corresponden al código reutilizado. El archivo 003 es un marcador histórico y el 004 es un ejemplo de alta de usuarios. Los números 008 y 012 se omiten porque el catálogo comercial de Villeta queda fuera de esta instalación.
+
+Una instalación nueva queda sin productos ni pedidos de ejemplo en la base. Cargá el menú del día luego de crear las cuentas. Los horarios y tarifas empiezan pendientes. El equipo puede registrar solicitudes sin esos datos y debe revisar la disponibilidad antes de confirmar. La V1.1 no requiere migraciones adicionales.
 
 Invitá a la primera persona administradora desde Supabase Auth. Desde el SQL Editor, con el UUID de su cuenta, ejecutá:
 
@@ -56,4 +58,16 @@ En el sitio de prueba, configurá en Meta la URL HTTPS de `/.netlify/functions/w
 
 ## Pruebas
 
-`pnpm build` genera la demo. `node --test tests/casa-central.test.mjs` ejecuta las comprobaciones dirigidas de Casa Central con PGlite y transporte simulado. `pnpm test` incluye la suite heredada. Para los casos de navegador usá `CHROMIUM_PATH` con la ruta del ejecutable de Chromium. GitHub Actions tiene el workflow de build y pruebas en `.github/workflows/test.yml`.
+`pnpm build` genera la demo. `node --test tests/casa-central.test.mjs` ejecuta las comprobaciones dirigidas de Casa Central con PGlite y transporte simulado. `pnpm test` ejecuta la suite completa. PGlite instala el esquema desde cero con roles y autenticación simulados. Playwright comprueba el CRM en escritorio y móvil.
+
+En Windows, para instalar Chromium y ejecutar las pruebas desde PowerShell:
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm exec playwright-core install chromium
+$env:CHROMIUM_PATH = node --input-type=module -e "import {chromium} from 'playwright-core'; console.log(chromium.executablePath())"
+pnpm build
+pnpm test
+```
+
+En Linux, indicá en `CHROMIUM_PATH` la ruta al ejecutable de Chromium. GitHub Actions tiene el workflow de build y pruebas en `.github/workflows/test.yml`.

@@ -14,7 +14,7 @@ test('El chatbot empieza en buffet y usa el menú publicado en cada mensaje', ()
   const hello = reduceOrder({ text: 'hola', catalog, menus });
   assert.equal(hello.cart.service, 'buffet');
   assert.match(hello.reply, /Casa Central/);
-  const rejected = reduceOrder({ text: 'Quiero chipas', cart: hello.cart, catalog, menus });
+  const rejected = reduceOrder({ text: 'Quiero cambiar al servicio de chipería', cart: hello.cart, catalog, menus });
   assert.match(rejected.reply, /exclusivamente/);
   const command = demoCommand('2 Plato de prueba', hello.cart, activeCatalog('buffet', catalog, menus));
   const ordered = reduceOrder({ text: '2 Plato de prueba', cart: hello.cart, command, catalog, menus });

@@ -1,37 +1,101 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {randomUUID as uid} from 'node:crypto';
-import {recoverCandidates,compactContext,deterministicConversation,validateInterpretation} from '../shared/conversation-context.js';import {migrateCatalogDemo,withCategories} from '../shared/catalog.js';import {defaults,emptyCart,quote,confirmation} from '../shared/viejo-engine.js';import {interpret} from '../netlify/lib/conversation.mjs';import {metricRecord} from '../netlify/lib/ai-metrics.mjs';import {runWorker} from '../netlify/lib/worker.mjs';import {databaseV11,mockEnvironment,restBridge} from './v11-helpers.mjs';
-const d={catalog:JSON.parse(await readFile(new URL('../catalogo-el-viejo.json',import.meta.url)))};migrateCatalogDemo(d);const catalog=withCategories(d.catalog,d.categories),cart=emptyCart('Cliente privado','chiperia');
-const output=(intent='help',items=[])=>({intent,items,customer_name:'',fulfillment:'a_coordinar',address:'',payment:'a_coordinar',category:'',query:''});
-test('V1.4 recuperación: múltiples candidatos, sinónimos, ambigüedad, expansión completa y contexto sin metadatos/fotos/precios',()=>{
- const text='dos bollitos y tres empanadas de carne y una pastafrola',candidates=recoverCandidates(text,cart,catalog);for(const id of ['bollito-base','empanada-carne','pasta-frola-base'])assert.ok(candidates.some(p=>p.id===id));assert.ok(candidates.length<catalog.length);
- assert.ok(recoverCandidates('dos empanadas',cart,catalog).filter(p=>p.name==='Empanada').length===5);assert.equal(recoverCandidates('producto desconocido',cart,catalog).length,catalog.length);assert.equal(recoverCandidates(text,cart,catalog,{expanded:true}).length,catalog.length);
- const old=JSON.stringify({cart,catalog:catalog.filter(p=>p.available).map(p=>Object.fromEntries(['id','name','variant','category','price','available','service'].map(k=>[k,p[k]]))),settings:defaults}),compact=JSON.stringify(compactContext({...cart,address:'SECRETO',delivery_location_id:'PUNTO',saved_carts:{private:'NO ENVIAR'}},candidates,defaults));assert.ok(compact.length<old.length*.5);assert.doesNotMatch(compact,/SECRETO|PUNTO|NO ENVIAR|Cliente privado|created_at|logo_url|reference_prices|price|image|3500/);
- const exact=deterministicConversation(text,cart,catalog);assert.equal(exact.items.length,3);assert.equal(exact.items.find(x=>x.variant_id==='empanada-carne').qty,3);const q=quote(exact.items,'chiperia',catalog);assert.equal(q.subtotal,43000);
- assert.equal(deterministicConversation('cuánto cuesta un bollito',cart,catalog).intent,'clarify');assert.match(deterministicConversation('cuánto cuesta un bollito',cart,catalog).message,/10.000/);assert.equal(deterministicConversation('horarios',cart,catalog).intent,'info');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { randomUUID as uid } from 'node:crypto';
+import { recoverCandidates, compactContext, deterministicConversation, validateInterpretation } from '../shared/conversation-context.js';
+import { activeCatalog, defaults, emptyCart, localDate, quote } from '../shared/viejo-engine.js';
+import { interpret } from '../netlify/lib/conversation.mjs';
+import { metricRecord } from '../netlify/lib/ai-metrics.mjs';
+import { runWorker } from '../netlify/lib/worker.mjs';
+import { databaseV11, mockEnvironment, restBridge } from './v11-helpers.mjs';
+
+const dishes = [
+  { id: 'guazu', name: 'Chipa guazú', category_id: 'guarniciones', available: true },
+  { id: 'asado', name: 'Asado a la olla', category_id: 'carne', available: true },
+  { id: 'sopa', name: 'Sopa paraguaya', category_id: 'guarniciones', available: true },
+];
+const menu = items => ({ id: uid(), day: localDate(), status: 'published', reviewed: true, items });
+const catalog = activeCatalog('buffet', [], [menu(dishes)]);
+const cart = emptyCart('Cliente privado');
+const output = (intent = 'help', items = []) => ({ intent, items, customer_name: '', fulfillment: 'a_coordinar', address: '', payment: '', category: '', query: '' });
+const guazu = { variant_id: 'guazu', qty: 2, notes: 'bien caliente' };
+
+test('Contexto compacto del buffet conserva candidatos y cantidades sin exponer datos privados', () => {
+  const text = 'dos chipas guazú y tres asados a la olla';
+  const candidates = recoverCandidates(text, cart, catalog);
+  assert.deepEqual(candidates.map(p => p.id), ['guazu', 'asado']);
+  assert.equal(recoverCandidates(text, cart, catalog, { expanded: true }).length, 3);
+  const json = JSON.stringify(compactContext({ ...cart, address: 'PRIVADO' }, candidates.map(p => ({ ...p, price: 12345, photo: 'PRIVADO' })), defaults));
+  assert.doesNotMatch(json, /Cliente privado|PRIVADO|12345/);
+  const command = deterministicConversation(text, cart, catalog);
+  assert.equal(command.items.length, 2);
+  assert.equal(command.items[1].qty, 3);
+  assert.equal(quote(command.items, 'buffet', catalog).subtotal, null);
+  assert.match(deterministicConversation('cuánto cuesta la chipa guazú', cart, catalog).message, /encargado/);
 });
-test('V1.4 proveedor: contexto compacto, ampliación ante help, métrica real, equivalencias comerciales y error seguro',async()=>{
- const restore=mockEnvironment(),saved=globalThis.fetch;let calls=[],metrics=[];try{
- globalThis.fetch=async(url,options)=>{const body=JSON.parse(options.body);if(url.includes('viejo_ai_usage')){metrics.push(body);return Response.json(null);}calls.push(body);return Response.json({model:'fixture-real-reported',status:'completed',output_text:JSON.stringify(calls.length===1?output():output('update_cart',[{variant_id:'bollito-base',qty:2,notes:'bien calientes'}])),usage:{input_tokens:123,output_tokens:45,total_tokens:168}});};
- const command=await interpret('pasame dos bollitos bien calientes',cart,catalog,defaults);assert.equal(command.intent,'update_cart');assert.equal(calls.length,2);assert.ok(calls[1].instructions.length>calls[0].instructions.length);assert.equal(calls[0].model,'fixture');assert.equal(calls[0].store,false);assert.equal(metrics.length,2);assert.equal(metrics[0].model,'fixture-real-reported');assert.equal(metrics[0].operation,'conversation');assert.equal(metrics[0].input_tokens,123);assert.doesNotMatch(JSON.stringify(metrics),/pasame|bollito|fixture-only|Cliente privado/);
- assert.throws(()=>validateInterpretation(output('update_cart',[{variant_id:'bollito-base',qty:1,notes:''}]),'un producto desconocido',cart,catalog,catalog),/unconfirmed/);
- assert.throws(()=>validateInterpretation(output('update_cart',[{variant_id:'bollito-base',qty:8,notes:''}]),'dos bollitos',cart,catalog,catalog));
- assert.throws(()=>validateInterpretation(output('update_cart',[{variant_id:'bollito-base',qty:2,notes:''}]),'dos bollitos y tres empanadas de carne',cart,catalog,catalog));
- globalThis.fetch=async(url)=>{if(url.includes('viejo_ai_usage'))return Response.json(null);return Response.json({output_text:JSON.stringify(output('update_cart',[{variant_id:'bollito-base',qty:1,notes:''}]))});};assert.equal((await interpret('una medialuna',cart,catalog,defaults)).intent,'clarify');
- for(const response of [()=>Response.json({}, {status:500}),()=>Response.json({status:'incomplete',output_text:JSON.stringify(output())}),()=>new Response('no JSON')]){globalThis.fetch=async(url)=>url.includes('viejo_ai_usage')?Response.json(null):response();await assert.rejects(()=>interpret('texto libre',cart,catalog,defaults));}
- }finally{globalThis.fetch=saved;restore();}
+
+test('Proveedor simulado amplía candidatos, informa métricas y valida cantidades y disponibilidad', async () => {
+  const restore = mockEnvironment();
+  const savedFetch = globalThis.fetch;
+  const calls = [], metrics = [];
+  try {
+    globalThis.fetch = async (url, options) => {
+      const body = JSON.parse(options.body);
+      if (url.includes('viejo_ai_usage')) { metrics.push(body); return Response.json(null); }
+      calls.push(body);
+      return Response.json({ model: 'fixture-reportado', status: 'completed', output_text: JSON.stringify(calls.length === 1 ? output() : output('update_cart', [guazu])), usage: { input_tokens: 10, output_tokens: 3, total_tokens: 13 } });
+    };
+    const text = 'pasame dos chipas guazú bien calientes';
+    assert.equal((await interpret(text, cart, catalog, defaults)).intent, 'update_cart');
+    assert.equal(calls.length, 2);
+    assert.ok(calls[1].instructions.length > calls[0].instructions.length);
+    assert.equal(metrics[1].total_tokens, 13);
+    assert.throws(() => validateInterpretation(output('update_cart', [guazu]), 'plato desconocido', cart, catalog, catalog));
+    assert.throws(() => validateInterpretation(output('update_cart', [guazu]), 'tres chipas guazú', cart, catalog, catalog));
+    assert.throws(() => validateInterpretation(output('update_cart', [guazu]), 'dos chipas guazú y tres asados a la olla', cart, catalog, catalog));
+    globalThis.fetch = async () => Response.json({}, { status: 503 });
+    await assert.rejects(interpret(text, cart, catalog, defaults));
+  } finally {
+    globalThis.fetch = savedFetch;
+    restore();
+  }
 });
-test('V1.4 PostgreSQL/worker: altas, alias y bajas vigentes sin reinicio, múltiples productos, recotización y métricas privadas',async()=>{
- const c=await databaseV11(),restore=mockEnvironment(),saved=globalThis.fetch;let calls=0;try{
- const bridge=restBridge(c,{onAI:()=>{calls++;return {output_text:JSON.stringify(output('update_cart',[{variant_id:'bollito-base',qty:1,notes:''}])),usage:{input_tokens:10,output_tokens:3,total_tokens:13}};}});globalThis.fetch=bridge.fetch;await c.db.exec("update guarni_settings set config=jsonb_set(config,'{bot_enabled}','true')");
- let chatId;const say=async text=>{const v=await c.rpc('guarni_ingest',['fixture.optim.'+uid(),'595000001111','Prueba',text]);chatId=v.conversation_id;await runWorker();return (await c.one('select cart from guarni_conversations where id=$1',[chatId])).cart;};
- await say('chipería');let current=await say('dos bollitos y tres empanadas de carne');assert.equal(current.items.length,2);assert.equal(current.subtotal,38000);assert.equal(calls,0);
- const p={id:uid(),name:'Medialuna',variant:'Base',category_id:'chiperia-6',price:null,active:true,available:false,seasonal:false,aliases:['Media luna','Medias lunas']};await c.staff('catalog',p);const before=structuredClone(current);current=await say('una media luna');assert.deepEqual(current,before);assert.equal(calls,0);
- p.price=6500;p.available=true;await c.staff('catalog',p);current=await say('una media luna');assert.ok(current.items.some(x=>x.variant_id===p.id&&x.qty===1));assert.equal(calls,0);
- p.aliases.push('Cuernito');await c.staff('catalog',p);current=await say('dos cuernitos');assert.equal(current.items.find(x=>x.variant_id===p.id).qty,3);assert.equal(calls,0);p.aliases=[];await c.staff('catalog',p);const unchanged=structuredClone(current);current=await say('un cuernito');assert.deepEqual(current,unchanged);assert.ok(calls>0);
- p.available=false;await c.staff('catalog',p);const list=(await c.db.query('select * from guarni_catalog')).rows;assert.throws(()=>quote(current.items,'chiperia',list));await assert.rejects(()=>c.rpc('viejo_quote',['chiperia',current.items]),/price_or_availability_changed/);
- const o={service:'chiperia',items:[{variant_id:'bollito-base',qty:1,unit_price:10000,name:'Bollito',variant:'Base',notes:''}],fulfillment:'retiro'};await c.db.exec("update guarni_catalog set price=11000 where id='bollito-base'");assert.equal(confirmation(o,{fulfillment:'retiro',schedule_reviewed:true},(await c.db.query('select * from guarni_catalog')).rows).requote,true);
- assert.ok((await c.one('select count(*)::int n from viejo_ai_usage')).n>0);await c.db.exec('set role authenticated');await assert.rejects(()=>c.db.exec('select * from viejo_ai_usage'),/permission denied/);await assert.rejects(()=>c.db.exec("insert into viejo_ai_usage(model,operation) values('x','conversation')"),/permission denied/);await c.db.exec('reset role');
- }finally{globalThis.fetch=saved;restore();await c.db.close();}
+
+test('Worker registra el menú vigente y métricas privadas con el proveedor simulado', async () => {
+  const context = await databaseV11();
+  const restore = mockEnvironment();
+  const savedFetch = globalThis.fetch;
+  let providerCalls = 0;
+  try {
+    globalThis.fetch = restBridge(context, { onAI: () => {
+      providerCalls++;
+      return { output_text: JSON.stringify(output('update_cart', [guazu])), usage: { input_tokens: 10, output_tokens: 3, total_tokens: 13 } };
+    } }).fetch;
+    const { config } = await context.one('select config from guarni_settings');
+    await context.staff('settings', { config: { ...config, bot_enabled: true } });
+    await context.staff('menu', menu(dishes));
+    const say = async text => {
+      const incoming = await context.rpc('guarni_ingest', ['fixture.optim.' + uid(), '595000001111', 'Prueba', text]);
+      await runWorker();
+      return (await context.one('select cart from guarni_conversations where id=$1', [incoming.conversation_id])).cart;
+    };
+    const ordered = await say('pasame dos chipas guazú bien calientes');
+    assert.equal(ordered.items[0].qty, 2);
+    assert.equal(ordered.items[0].notes, guazu.notes);
+    assert.equal(ordered.subtotal, null);
+    assert.equal(providerCalls, 1);
+    await context.staff('menu', menu(dishes.map(d => ({ ...d, available: d.id !== 'guazu' }))));
+    assert.deepEqual((await say('dos chipas guazú')).items, ordered.items);
+    assert.equal(providerCalls, 1);
+    await assert.rejects(context.rpc('viejo_quote', ['buffet', ordered.items]), /price_or_availability_changed/);
+    assert.equal((await context.one('select count(*)::int n from viejo_ai_usage')).n, 1);
+    await context.db.exec('set role authenticated');
+    await assert.rejects(context.db.exec('select * from viejo_ai_usage'), /permission denied/);
+    await assert.rejects(context.db.exec("insert into viejo_ai_usage(model,operation) values('x','conversation')"), /permission denied/);
+  } finally {
+    globalThis.fetch = savedFetch;
+    restore();
+    await context.db.close();
+  }
 });
 test('V1.4 métricas: no inventa tokens ni costos; operaciones separadas y campos permitidos',()=>{
  const row=metricRecord({model:'fixture',operation:'vision',usage:{input_tokens:0,output_tokens:2,total_tokens:2,text:'PRIVADO',secret:'NO',cost:8}});assert.equal(row.input_tokens,0);assert.equal(row.operation,'vision');assert.doesNotMatch(JSON.stringify(row),/PRIVADO|NO|cost/);const unknown=metricRecord({model:'fixture',operation:'conversation',usage:{input_tokens:-1,output_tokens:1.5,total_tokens:'2'}});assert.ok(!('input_tokens'in unknown));assert.ok(!('total_tokens'in unknown));assert.equal(metricRecord({model:'fixture',operation:'other'}),null);

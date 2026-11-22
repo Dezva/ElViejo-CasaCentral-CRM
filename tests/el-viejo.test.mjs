@@ -1,22 +1,68 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
-import {defaults,reduceOrder,emptyCart,quote,confirmation,activeCatalog,localDate,availability} from '../shared/viejo-engine.js';
-import {validateImage} from '../netlify/functions/menu-recognize.mjs';
-const catalog=JSON.parse(await readFile(new URL('../catalogo-el-viejo.json',import.meta.url)));
-const now=new Date('2026-11-20T15:30:00Z'),menus=[{day:localDate(now),status:'published',items:[{id:'fixture',name:'Plato ficticio de prueba',category_id:'guarniciones',available:true}]}];
-const chip=catalog[0];
-test('Catálogo confirmado: 28 productos con precio, 3 panes dulces inactivos; bollo no se inventa',()=>{assert.equal(catalog.length,31);assert.equal(catalog.filter(x=>x.price>0).length,28);assert.ok(catalog.filter(x=>x.seasonal).every(x=>x.price===null&&!x.available));assert.equal(catalog.some(x=>x.name==='Bollo'),false);});
-test('Selección y cambio de servicio conserva carritos separados sin mezclar precios',()=>{let c=reduceOrder({text:'hola',catalog,now}).cart;assert.equal(c.service,null);c=reduceOrder({text:'chipería',cart:c,catalog,now}).cart;c=reduceOrder({text:'3 tradicional',cart:c,catalog,now,command:{intent:'update_cart',items:[{variant_id:chip.id,qty:3}]}}).cart;assert.equal(c.subtotal,10500);c=reduceOrder({text:'buffet',cart:c,catalog,menus,now}).cart;assert.equal(c.items.length,0);c=reduceOrder({text:'chipería',cart:c,catalog,menus,now}).cart;assert.equal(c.items[0].qty,3);});
-test('Buffet solo del día publicado y sin cálculos desde referencias',()=>{assert.equal(activeCatalog('buffet',catalog,[{...menus[0],day:'2026-11-19'}],now).length,0);const q=quote([{variant_id:'fixture',qty:2,unit_price:99}],'buffet',activeCatalog('buffet',catalog,menus,now));assert.equal(q.subtotal,null);assert.equal(q.items[0].unit_price,null);});
-test('Chipería ignora precios externos, valida cantidades y bloquea agotados/temporada',()=>{assert.equal(quote([{variant_id:chip.id,qty:3,unit_price:1}],'chiperia',catalog).subtotal,10500);for(const qty of [-1,0,1.5,31,null])assert.throws(()=>quote([{variant_id:chip.id,qty}],'chiperia',catalog));assert.throws(()=>quote([{variant_id:chip.id,qty:1}],'chiperia',[{...chip,available:false}]));assert.throws(()=>quote([{variant_id:catalog.at(-1).id,qty:1}],'chiperia',catalog));});
-test('Delivery exige punto y referencia; retiro no solicita ubicación; IA no acepta',()=>{const cart={...emptyCart('Prueba','chiperia'),...quote([{variant_id:chip.id,qty:3}],'chiperia',catalog),quoted:true,fulfillment:'delivery'};assert.equal(reduceOrder({text:'CONFIRMAR PEDIDO',cart,catalog,now}).kind,'reply');const result=reduceOrder({text:'CONFIRMAR PEDIDO',cart:{...cart,fulfillment:'retiro'},catalog,now});assert.equal(result.kind,'submit');assert.equal(reduceOrder({text:'hola',cart,catalog,now,command:{intent:'submit'}}).kind,'reply');});
-test('Confirmación de chipería suma delivery manual explícito, retiro cero y recotiza cambios',()=>{const o={service:'chiperia',...quote([{variant_id:chip.id,qty:3}],'chiperia',catalog),fulfillment:'delivery',delivery_location_id:'point'};const p={fulfillment:'delivery',address:'Referencia de prueba',shipping_fee:8000,schedule_reviewed:true};assert.equal(confirmation(o,p,catalog,{now}).total,18500);assert.throws(()=>confirmation(o,{...p,shipping_fee:null},catalog,{now}));assert.equal(confirmation({...o,fulfillment:'retiro'},{fulfillment:'retiro',shipping_fee:8000,schedule_reviewed:true},catalog,{now}).total,10500);assert.equal(confirmation(o,p,[{...chip,price:4000}],{now}).requote,true);assert.equal(confirmation(o,{...p,shipping_fee:0},catalog,{now}).total,10500);});
-test('Buffet requiere toma humana y precio acordado; revisión conjunta de delivery',()=>{const o={service:'buffet',...quote([{variant_id:'fixture',qty:1}],'buffet',activeCatalog('buffet',catalog,menus,now)),fulfillment:'retiro'};const p={fulfillment:'retiro',buffet_amount:55000,price_agreed:true,schedule_reviewed:true};assert.throws(()=>confirmation(o,p,catalog,{menus,now}));assert.equal(confirmation(o,p,catalog,{menus,now,mode:'human',owner_id:'a',actor:'a'}).total,55000);assert.throws(()=>confirmation({...o,group_id:'group'},p,catalog,{menus,now,mode:'human',owner_id:'a',actor:'a'}));});
-test('Horarios y fotos: zona Paraguay, delivery chipería pendiente y validación MIME',()=>{assert.equal(availability('buffet','retiro',defaults,now),null);assert.match(availability('chiperia','delivery',defaults,now),/pendiente/);assert.throws(()=>validateImage('data:image/png;base64,YWJj'));assert.throws(()=>validateImage('https://example.test/image.png'));});
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { activeCatalog, confirmation, defaults, demoCommand, emptyCart, localDate, quote, reduceOrder, sameItems } from '../shared/viejo-engine.js';
 
-test('Cotización: claves JSONB reordenadas no requieren recotización infinita y ubicaciones no se restauran desde carritos guardados',()=>{
- const q=quote([{variant_id:chip.id,qty:3}],'chiperia',catalog),cart={...emptyCart('Prueba','chiperia'),...q,fulfillment:'retiro',quoted:true};
- cart.items=cart.items.map(x=>Object.fromEntries(Object.entries(x).reverse()));
- assert.equal(reduceOrder({text:'CONFIRMAR PEDIDO',cart,catalog,now}).kind,'submit');
- const switched=reduceOrder({text:'buffet',cart:{...cart,delivery_location_id:'old',saved_carts:{buffet:{service:'buffet',items:[],delivery_location_id:'older'}}},catalog,menus,now}).cart;
- assert.equal(switched.delivery_location_id,null);assert.equal(switched.saved_carts.chiperia.delivery_location_id,null);
+const now = new Date('2026-11-20T15:30:00Z');
+const dishes = [
+  { id: 'guazu', name: 'Chipa guazú', category_id: 'guarniciones', available: true },
+  { id: 'asado', name: 'Asado a la olla', category_id: 'carne', available: true },
+  { id: 'empanada', name: 'Empanada de prueba', category_id: 'carne', available: true },
+];
+const published = items => [{ day: localDate(now), status: 'published', items }];
+const say = (text, cart = emptyCart(), menus = published(dishes)) => {
+  const catalog = activeCatalog('buffet', [], menus, now);
+  return reduceOrder({ text, cart, catalog, menus, now, command: demoCommand(text, cart, catalog) });
+};
+
+test('Buffet acepta nombres legítimos y cantidades sin habilitar otro servicio', () => {
+  const ordered = say('Quiero dos chipas guazú y un asado a la olla');
+  assert.deepEqual(ordered.cart.items.map(({ variant_id, qty }) => [variant_id, qty]), [['guazu', 2], ['asado', 1]]);
+  const extra = say('Una empanada de prueba', ordered.cart);
+  assert.equal(extra.cart.items[2].variant_id, 'empanada');
+  const unavailable = published(dishes.map(dish => dish.id === 'empanada' ? { ...dish, available: false } : dish));
+  assert.doesNotMatch(say('menú', extra.cart, unavailable).reply, /Empanada/);
+  assert.match(say('Una empanada de prueba', ordered.cart, unavailable).reply, /agotado/);
+  for (const [text, reply] of [['Quiero cambiar a Chipería El Viejo', /exclusivamente/], ['Quiero un plato desconocido', /No identifiqué/]]) {
+    const result = say(text, ordered.cart);
+    assert.match(result.reply, reply);
+    assert.deepEqual(result.cart.items, ordered.cart.items);
+    assert.equal(result.cart.service, 'buffet');
+  }
+});
+
+test('El buffet utiliza solo el menú publicado de hoy y descarta precios y cantidades incorrectas', () => {
+  assert.equal(activeCatalog('buffet', [], [{ ...published(dishes)[0], day: '2026-11-19' }], now).length, 0);
+  const list = activeCatalog('buffet', [], published(dishes), now);
+  for (const qty of [0, 31, 1.5, '2']) assert.throws(() => quote([{ variant_id: 'asado', qty }], 'buffet', list));
+  const q = quote([{ variant_id: 'asado', qty: 2, unit_price: 1 }], 'buffet', list);
+  assert.equal(q.items[0].unit_price, null);
+  assert.equal(q.subtotal, null);
+  assert.equal(sameItems(q.items, [Object.fromEntries(Object.entries(q.items[0]).reverse())]), true);
+});
+
+test('Delivery conserva platos, exige punto y referencia y limpia la ubicación al cambiar a retiro', () => {
+  const ordered = say('Dos chipas guazú').cart;
+  const delivery = say('delivery', ordered);
+  assert.deepEqual(delivery.cart.items, ordered.items);
+  assert.match(delivery.reply, /ubicación puntual/);
+  assert.notEqual(say('CONFIRMAR PEDIDO', delivery.cart).kind, 'submit');
+  const located = { ...delivery.cart, delivery_location_id: 'fixture', address: 'Referencia de prueba' };
+  assert.equal(say('CONFIRMAR PEDIDO', located).kind, 'submit');
+  const pickup = say('retiro', located).cart;
+  assert.deepEqual(pickup.items, ordered.items);
+  assert.equal(pickup.delivery_location_id, null);
+  assert.equal(pickup.address, '');
+  assert.equal(say('CONFIRMAR PEDIDO', pickup).kind, 'submit');
+});
+
+test('Confirmación exige intervención, importe acordado y costo explícito de envío', () => {
+  const order = { ...say('Dos chipas guazú').cart, fulfillment: 'delivery', delivery_location_id: 'fixture' };
+  const input = { fulfillment: 'delivery', address: 'Referencia ficticia', shipping_fee: 8000, buffet_amount: 20000, price_agreed: true, schedule_reviewed: true };
+  const context = { mode: 'human', owner_id: 'actor', actor: 'actor', menus: published(dishes), now, settings: defaults };
+  assert.throws(() => confirmation(order, input, [], { ...context, mode: 'bot' }), /Tomá la conversación/);
+  assert.throws(() => confirmation(order, { ...input, price_agreed: false }, [], context), /importe acordado/);
+  assert.throws(() => confirmation(order, { ...input, shipping_fee: undefined }, [], context), /costo del delivery/);
+  assert.throws(() => confirmation(order, { ...input, schedule_reviewed: false }, [], context), /pendiente/);
+  assert.equal(confirmation(order, input, [], context).total, 28000);
+  assert.equal(confirmation({ ...order, fulfillment: 'retiro' }, { ...input, fulfillment: 'retiro' }, [], context).shipping_fee, 0);
 });

@@ -1,13 +1,45 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {chromium} from 'playwright-core';import {spawn} from 'node:child_process';import {once} from 'node:events';import {join} from 'node:path';import {tmpdir} from 'node:os';
-test('V1.3 navegador: categorías, productos, variantes, precio propio, sinónimos, filtros, permisos y móvil',async()=>{
- const server=spawn(process.execPath,['scripts/dev.mjs'],{env:{...process.env,PORT:'5178'},stdio:['ignore','pipe','pipe']});let browser;
- try{await once(server.stdout,'data');browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:5178/#catalog');await page.getByRole('heading',{name:'Lo bueno empieza en el catálogo.'}).waitFor();
- await page.locator('#catalogSearch').fill('pastafrola');assert.equal(await page.locator('#catalogProducts article').count(),1);await page.getByRole('button',{name:'Editar Pasta frola',exact:true}).click();await page.locator('[name=price]').fill('5500');await page.locator('#save').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);assert.match(await page.locator('#catalogProducts').innerText(),/5.500/);
- await page.locator('#catalogSearch').fill('');await page.locator('.catalog-categories summary').click();await page.getByRole('button',{name:'+ Nueva categoría'}).click();await page.locator('[name=name]').fill('Bebidas');await page.locator('#save').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
- await page.getByRole('button',{name:'+ Producto',exact:true}).click();await page.locator('[name=name]').fill('Medialuna');await page.locator('[name=category_id]').selectOption({label:'Facturas'});await page.locator('[name=aliases]').fill('Medialunas\nMedia luna\nMedias lunas');await page.locator('#save').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);await page.locator('#catalogSearch').fill('media luna');assert.match(await page.locator('#catalogProducts').innerText(),/Precio pendiente/);
- await page.getByRole('button',{name:'Editar Medialuna',exact:true}).click();await page.locator('[name=price]').fill('7000');await page.locator('[name=available]').check();await page.locator('#save').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);await page.getByRole('button',{name:'+ Variante',exact:true}).click();await page.locator('[name=variant]').fill('Integral');await page.locator('[name=price]').fill('8000');await page.locator('[name=available]').check();await page.locator('#save').click();await page.waitForFunction(()=>!document.getElementById('dialog').open);
- await page.locator('#catalogSearch').fill('Medialuna');assert.equal(await page.locator('#catalogProducts article').count(),2);await page.reload();await page.locator('#catalogSearch').fill('Medialuna');assert.equal(await page.locator('#catalogProducts article').count(),2);const d=await page.evaluate(()=>JSON.parse(localStorage.getItem('el-viejo-demo-v1')));assert.equal(d.catalog.find(p=>p.name==='Medialuna'&&p.variant==='Base').price,7000);assert.equal(d.catalog.find(p=>p.name==='Medialuna'&&p.variant==='Integral').price,8000);assert.equal(d.catalog.find(p=>p.id==='facturas-base').active,false);
- await page.locator('#catalogSearch').fill('');await page.locator('#catalogCategory').selectOption('chiperia-6');await page.screenshot({path:join(tmpdir(),'catalogo-v13-desktop.png'),fullPage:true});await page.setViewportSize({width:390,height:844});await page.waitForFunction(()=>document.getElementById('sidebar').getBoundingClientRect().right<=0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:join(tmpdir(),'catalogo-v13-mobile.png'),fullPage:true});
- await page.evaluate(()=>{const d=JSON.parse(localStorage.getItem('el-viejo-demo-v1'));d.member.role='member';d.member.catalog_editor=false;localStorage.setItem('el-viejo-demo-v1',JSON.stringify(d));});await page.reload();await page.locator('#catalogSearch').waitFor();assert.equal(await page.getByRole('button',{name:'+ Producto',exact:true}).count(),0);assert.equal(await page.locator('[data-do=product]').count(),0);assert.deepEqual(errors,[]);
- }finally{await browser?.close();server.kill();}
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright-core';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
+
+test('Administración del menú de buffet: categoría, borrador, publicación y disponibilidad', async () => {
+  const server = spawn(process.execPath, ['scripts/dev.mjs'], { env: { ...process.env, PORT: '5178' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  let browser;
+  try {
+    await Promise.race([once(server.stdout, 'data'), once(server, 'exit').then(() => { throw Error('Servidor no disponible'); })]);
+    browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox'] });
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    page.setDefaultTimeout(6000);
+    await page.goto('http://127.0.0.1:5178/#menus');
+    await page.getByRole('button', { name: '+ Cargar menú' }).click();
+    assert.equal(await page.locator('[data-view=catalog]').count(), 0);
+    assert.match(await page.locator('.buffet-category-guide').innerText(), /Tarifa pendiente de confirmación/);
+    await page.locator('#addDish').click();
+    await page.locator('[name=dish_name]').fill('Chipa guazú de prueba');
+    await page.locator('#saveMenuDraft').click();
+    const state = () => page.evaluate(() => JSON.parse(localStorage.getItem('casa-central-demo-v1')));
+    assert.equal((await state()).menus[0].status, 'draft');
+    await page.locator('[data-do=menu]').last().click();
+    await page.locator('[name=dish_category]').selectOption('guarniciones');
+    await page.locator('[name=dish_available]').check();
+    await page.locator('#menuReviewed').check();
+    await page.locator('#publishMenu').click();
+    const published = (await state()).menus.find(menu => menu.status === 'published');
+    assert.equal(published.items[0].category_id, 'guarniciones');
+    assert.equal(published.items[0].available, true);
+    await page.getByRole('button', { name: 'Actualizar parcialmente / agotados' }).click();
+    await page.locator('[name=dish_available]').uncheck();
+    await page.locator('#menuReviewed').check();
+    await page.locator('#publishMenu').click();
+    const { menus } = await state();
+    assert.equal(menus.filter(menu => menu.status === 'published').length, 1);
+    assert.equal(menus.find(menu => menu.status === 'published').items[0].available, false);
+    assert.equal(menus.find(menu => menu.id === published.id).status, 'archived');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  } finally {
+    await browser?.close();
+    server.kill();
+  }
 });

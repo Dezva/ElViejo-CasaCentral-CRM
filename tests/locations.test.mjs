@@ -1,3 +1,4 @@
+import {localDate} from '../shared/viejo-engine.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac,randomUUID} from 'node:crypto';
@@ -145,17 +146,19 @@ test('Worker: las respuestas de modalidad conservan productos sin IA y los fallo
  const previous={...process.env},savedFetch=globalThis.fetch;
  try{
   Object.assign(process.env,{SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'test-secret',BOT_ENABLED:'true'});
-  let claimed=false,finished;
+  let claimed=false,finished,body='delivery',withMenu=true;
+  const item={id:'plato',name:'Plato de prueba',category_id:'carne',available:true};
   globalThis.fetch=async(endpoint,options={})=>{
    if(endpoint.includes('guarni_settings?'))return Response.json([{config:{bot_enabled:true}}]);
-   if(endpoint.endsWith('guarni_claim')){if(claimed)return Response.json(null);claimed=true;return Response.json({kind:'inbound',job:{id:'job'},conversation:{id:'chat',mode:'bot',revision:0,client_id:'client',cart:{...quote('retiro').cart,service:'chiperia'}},message:{content_type:'text',body:'delivery'}});}
-   if(endpoint.includes('guarni_catalog?'))return Response.json(catalog.map(p=>({...p,service:'chiperia'})));
-   if(endpoint.includes('viejo_menus?')||endpoint.includes('viejo_catalog_categories?'))return Response.json([]);
+   if(endpoint.endsWith('guarni_claim')){if(claimed)return Response.json(null);claimed=true;return Response.json({kind:'inbound',job:{id:'job'},conversation:{id:'chat',mode:'bot',revision:0,client_id:'client',draft_location_id:body==='retiro'?'old-location':null,cart:{...quote('retiro').cart,service:'buffet',address:'Referencia anterior',items:[{variant_id:item.id,qty:2}]}},message:{content_type:'text',body}});}
+   if(endpoint.includes('viejo_menus?'))return Response.json(withMenu?[{day:localDate(),status:'published',items:[item]}]:[]);
    if(endpoint.includes('guarni_settings?'))return Response.json([{config:{bot_enabled:true}}]);
    if(endpoint.includes('crm_clients?'))return Response.json([{name:'Ana'}]);
    assert.match(endpoint,/guarni_finish$/);finished=JSON.parse(options.body);return Response.json({ok:true});
   };
   await runWorker();assert.equal(finished.p_cart.items.length,1);assert.equal(finished.p_cart.items[0].qty,2);assert.equal(finished.p_cart.fulfillment,'delivery');assert.match(finished.p_body,/ubicación puntual/);
+  claimed=false;withMenu=false;await runWorker();assert.equal(finished.p_cart.fulfillment,'delivery');assert.equal(finished.p_cart.items.length,1);assert.match(finished.p_body,/no hay menú/);
+  claimed=false;withMenu=true;body='retiro';await runWorker();assert.equal(finished.p_cart.fulfillment,'retiro');assert.equal(finished.p_cart.items.length,1);assert.equal(finished.p_cart.delivery_location_id,null);assert.equal(finished.p_cart.address,'');
   claimed=false;let retried=false;
   globalThis.fetch=async(endpoint,options={})=>{
    if(endpoint.includes('guarni_settings?'))return Response.json([{config:{bot_enabled:true}}]);
