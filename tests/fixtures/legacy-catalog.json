@@ -1,0 +1,1275 @@
+{
+  "schema_version": "1.1.0",
+  "negocio": "Guarnipitan Bar",
+  "fecha_transcripcion": "2026-11-08",
+  "moneda": "PYG",
+  "unidad_importes": "guaraníes enteros; 39,500 en las capturas equivale a 39500 PYG",
+  "estado": "borrador_no_publicado",
+  "alcance": "Catálogo de trabajo transcrito de las 16 capturas adjuntas. Las menciones recortadas de descripciones se conservan aparte y no constituyen opciones de pedido.",
+  "reglas": [
+    "No inventar ni completar importes truncados.",
+    "Un precio transcrito de imagen no acredita que siga vigente; validar con el local antes de activar ventas.",
+    "No interpretar disponibilidad null como producto disponible.",
+    "El chatbot debe consultar un catálogo validado; no calcular variantes mediante multiplicadores ni deducir adicionales.",
+    "El local debe confirmar el pedido antes de considerarlo aceptado.",
+    "Los alias ayudan a buscar el producto; validar equivalencia comercial e ingredientes antes de publicarlos.",
+    "Las imágenes de precios no se usaron como autorización para publicar ni conectar servicios.",
+    "Las referencias recortadas no son fichas independientes ni opciones de pedido. No es necesario encontrarlas como productos separados para continuar.",
+    "Simple y Clásica aparecen como fichas distintas: se conservan separadas.",
+    "Si el local desea ofrecer las variantes solo mencionadas en descripciones, deberá confirmar sus características y precios antes de incorporarlas."
+  ],
+  "requisitos_confirmados": {
+    "canal": "WhatsApp",
+    "confirmacion_pedido": "El cliente revisa y confirma el resumen; se registra pendiente de aceptación del local.",
+    "aceptacion_local_obligatoria": true,
+    "crm": {
+      "leer_conversaciones": true,
+      "responder_conversaciones": true
+    },
+    "atencion_humana": "Tomar conversación pausa al bot solo para ese cliente; reactivación explícita desde el CRM.",
+    "historial": "Mensajes entrantes y salientes del bot y empleados asociados al cliente y al pedido."
+  },
+  "pendientes_operativos": [
+    "Modalidades de pedido: retiro, delivery y/o consumo en el local.",
+    "Zonas, costo de envío y mínimo de compra, si corresponde.",
+    "Formas de pago y horarios para recibir pedidos.",
+    "Validar vigencia de los precios, tamaños, adicionales e ingredientes.",
+    "Validar qué productos del menú previo faltan en estas capturas y sus precios.",
+    "Las capturas llaman a la categoría 'Hamburguesas de 210gms'; validar el peso frente a las descripciones del menú previo."
+  ],
+  "fuentes": [
+    {
+      "id": "imagen-1",
+      "archivo": "codex-clipboard-26be9d7a-7066-4708-b51c-aa0396e8444f.png",
+      "contenido": "Pizzas"
+    },
+    {
+      "id": "imagen-2",
+      "archivo": "codex-clipboard-438d41ba-8683-49a1-b7a1-ffe325b0e494.png",
+      "contenido": "Pizzetas, 4 pedazos"
+    },
+    {
+      "id": "imagen-3",
+      "archivo": "codex-clipboard-8d8893c7-b310-4117-9380-346764c78765.png",
+      "contenido": "Kikito, Kikito Potente y Cocote"
+    },
+    {
+      "id": "imagen-4",
+      "archivo": "codex-clipboard-e07095c0-ba88-487e-a984-6f973d7d9b4e.png",
+      "contenido": "Hamburguesas de 210 g"
+    },
+    {
+      "id": "imagen-5",
+      "archivo": "codex-clipboard-fcffa018-8061-4ea4-90cb-4599bd3fbcfe.png",
+      "contenido": "Sandwiches"
+    },
+    {
+      "id": "imagen-6",
+      "archivo": "codex-clipboard-97e65509-33fd-497f-b681-735072272af3.png",
+      "contenido": "Papas"
+    },
+    {
+      "id": "imagen-7",
+      "archivo": "codex-clipboard-3bf37ea9-1a8a-4b38-8b2c-f6ea59c145af.png",
+      "contenido": "Picadas"
+    },
+    {
+      "id": "imagen-8",
+      "archivo": "codex-clipboard-608cf282-afe5-4a9e-a47c-029417ca224b.png",
+      "contenido": "Filet Mignon, Picaña y Shawarma"
+    },
+    {
+      "id": "imagen-9",
+      "archivo": "codex-clipboard-56ab4921-6349-481b-adea-66abee661d57.png",
+      "contenido": "Sandwiches y hamburguesas"
+    },
+    {
+      "id": "imagen-10",
+      "archivo": "codex-clipboard-c7d271c2-beb2-457c-bfef-08364a711ddc.png",
+      "contenido": "Papas y sandwiches"
+    },
+    {
+      "id": "imagen-11",
+      "archivo": "codex-clipboard-0f327fc6-5253-4374-9180-4bf7ddccbf46.png",
+      "contenido": "Ensalada, hamburguesa y acompañamientos"
+    },
+    {
+      "id": "imagen-12",
+      "archivo": "codex-clipboard-f129cb06-822b-42f7-b73d-51ee788e0cb0.png",
+      "contenido": "Papas, ensalada, Clásica con Rúcula y mandioca"
+    },
+    {
+      "id": "imagen-13",
+      "archivo": "codex-clipboard-dd295a6f-8f67-4c8c-a102-8ea0cb1e2c4f.png",
+      "contenido": "Papas y sándwiches"
+    },
+    {
+      "id": "imagen-14",
+      "archivo": "codex-clipboard-d4971c83-8c5b-4899-94d7-71416955d56a.png",
+      "contenido": "Sándwiches, Guarnipitan, Completa y Clásica"
+    },
+    {
+      "id": "imagen-15",
+      "archivo": "codex-clipboard-a4765582-d043-4b99-a1eb-26f7a15ab8a5.png",
+      "contenido": "Clásica, Cheese Bacon, Cheese, Simple y sándwiches"
+    },
+    {
+      "id": "imagen-16",
+      "archivo": "codex-clipboard-f3405aed-2a54-4141-8801-c10ffea7b3eb.png",
+      "contenido": "Kikito, picadas y cartas de pizzas y pizzetas"
+    }
+  ],
+  "productos": [
+    {
+      "id": "pizzas-y-pizzetas-mozzarella",
+      "nombre": "Mozzarella",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-mozzarella-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 40000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-mozzarella-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 28000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-choclo",
+      "nombre": "Choclo",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-choclo-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 45000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-choclo-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-palmito",
+      "nombre": "Palmito",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-palmito-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 50000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-palmito-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-margarita",
+      "nombre": "Margarita",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-margarita-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 50000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-margarita-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-napolitana",
+      "nombre": "Napolitana",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-napolitana-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 50000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-napolitana-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-jamon-y-queso",
+      "nombre": "Jamón y queso",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-jamon-y-queso-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 45000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-jamon-y-queso-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-catupiry",
+      "nombre": "Catupiry",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-catupiry-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 50000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-catupiry-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-catupiry-y-choclo",
+      "nombre": "Catupiry y choclo",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-catupiry-y-choclo-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 55000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-catupiry-y-choclo-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-pepperoni",
+      "nombre": "Pepperoni",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-pepperoni-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 55000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-pepperoni-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-atun",
+      "nombre": "Atún",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-atun-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 60000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-atun-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 40000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-catupiry-y-pollo",
+      "nombre": "Catupiry y pollo",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-catupiry-y-pollo-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 60000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-catupiry-y-pollo-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-primavera",
+      "nombre": "Primavera",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-primavera-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 60000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-primavera-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-panceta",
+      "nombre": "Panceta",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-panceta-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 60000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-panceta-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-rucula-con-jamon",
+      "nombre": "Rúcula con jamón",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-rucula-con-jamon-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 55000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-rucula-con-jamon-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 30000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-mexicana",
+      "nombre": "Mexicana",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-mexicana-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 65000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-mexicana-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 40000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pizzas-y-pizzetas-cuatro-quesos",
+      "nombre": "Cuatro quesos",
+      "categoria": "Pizzas y pizzetas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "pizzas-y-pizzetas-cuatro-quesos-pizza",
+          "nombre": "Pizza",
+          "precio_pyg": 65000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-1"
+          ],
+          "observacion": "La imagen de precios no especifica porciones; validar tamaño antes de publicar."
+        },
+        {
+          "id": "pizzas-y-pizzetas-cuatro-quesos-pizzeta-4-pedazos",
+          "nombre": "Pizzeta · 4 pedazos",
+          "precio_pyg": 40000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-kikito",
+      "nombre": "Kikito",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Kikito"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-kikito-base",
+          "nombre": "Base",
+          "precio_pyg": 39500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-kikito-potente",
+      "nombre": "Kikito Potente",
+      "categoria": "Sándwiches",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-kikito-potente-base",
+          "nombre": "Base",
+          "precio_pyg": 48500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-cocote",
+      "nombre": "Cocote",
+      "categoria": "Sándwiches",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-cocote-base",
+          "nombre": "Base",
+          "precio_pyg": 35500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-coco-grill",
+      "nombre": "Coco Grill",
+      "categoria": "Sándwiches",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-coco-grill-base",
+          "nombre": "Base",
+          "precio_pyg": 28500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-5",
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-super-coco",
+      "nombre": "Super Coco",
+      "categoria": "Sándwiches",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-super-coco-base",
+          "nombre": "Base",
+          "precio_pyg": 38500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-5",
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-milanga-de-carne-o-pollo",
+      "nombre": "Milanga de carne o pollo",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Milanga"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-milanga-de-carne-o-pollo-base",
+          "nombre": "Base",
+          "precio_pyg": 28500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-5",
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-filet-mignon",
+      "nombre": "Filet Mignon",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Filet Mingon"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-filet-mignon-base",
+          "nombre": "Base",
+          "precio_pyg": 29500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-8",
+            "imagen-9",
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-sandwich-de-picana",
+      "nombre": "Sándwich de picaña",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Sand. Picaña",
+        "Picaña al ajo"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-sandwich-de-picana-base",
+          "nombre": "Base",
+          "precio_pyg": 39500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-8",
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-shawarma",
+      "nombre": "Shawarma",
+      "categoria": "Sándwiches",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-shawarma-base",
+          "nombre": "Base",
+          "precio_pyg": 27500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-8",
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-ciabatta",
+      "nombre": "Ciabatta",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Chibatta"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-ciabatta-base",
+          "nombre": "Base",
+          "precio_pyg": 44500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sandwiches-hai-me",
+      "nombre": "Hai'me",
+      "categoria": "Sándwiches",
+      "alias": [
+        "Haime",
+        "Shawarma Haime"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "sandwiches-hai-me-base",
+          "nombre": "Base",
+          "precio_pyg": 38500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-simple",
+      "nombre": "Simple",
+      "categoria": "Hamburguesas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-simple-base",
+          "nombre": "Base",
+          "precio_pyg": 25500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-cheese",
+      "nombre": "Cheese",
+      "categoria": "Hamburguesas",
+      "alias": [
+        "Chesse"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-cheese-base",
+          "nombre": "Base",
+          "precio_pyg": 39500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        },
+        {
+          "id": "hamburguesas-cheese-doble",
+          "nombre": "Doble",
+          "precio_pyg": 59500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        },
+        {
+          "id": "hamburguesas-cheese-triple",
+          "nombre": "Triple",
+          "precio_pyg": 79500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-cheese-bacon",
+      "nombre": "Cheese Bacon",
+      "categoria": "Hamburguesas",
+      "alias": [
+        "Chesse Baccon"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-cheese-bacon-base",
+          "nombre": "Base",
+          "precio_pyg": 44500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        },
+        {
+          "id": "hamburguesas-cheese-bacon-doble",
+          "nombre": "Doble",
+          "precio_pyg": 64500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-mexicana",
+      "nombre": "Mexicana",
+      "categoria": "Hamburguesas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-mexicana-base",
+          "nombre": "Base",
+          "precio_pyg": 49500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-paraguaya",
+      "nombre": "Paraguaya",
+      "categoria": "Hamburguesas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-paraguaya-base",
+          "nombre": "Base",
+          "precio_pyg": 49500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-guarnipitan",
+      "nombre": "Guarnipitan",
+      "categoria": "Hamburguesas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-guarnipitan-base",
+          "nombre": "Base",
+          "precio_pyg": 55500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        },
+        {
+          "id": "hamburguesas-guarnipitan-doble",
+          "nombre": "Doble",
+          "precio_pyg": 79500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-completa",
+      "nombre": "Completa",
+      "categoria": "Hamburguesas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-completa-base",
+          "nombre": "Base",
+          "precio_pyg": 44500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        },
+        {
+          "id": "hamburguesas-completa-doble",
+          "nombre": "Doble",
+          "precio_pyg": 64500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-9"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-clasica-con-rucula",
+      "nombre": "Clásica con rúcula",
+      "categoria": "Hamburguesas",
+      "alias": [
+        "Clasica con Rucula"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-clasica-con-rucula-base",
+          "nombre": "Base",
+          "precio_pyg": 39500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        },
+        {
+          "id": "hamburguesas-clasica-con-rucula-doble",
+          "nombre": "Doble",
+          "precio_pyg": 59500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        },
+        {
+          "id": "hamburguesas-clasica-con-rucula-triple",
+          "nombre": "Triple",
+          "precio_pyg": 79500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-papas-fritas",
+      "nombre": "Papas fritas",
+      "categoria": "Acompañamientos",
+      "alias": [
+        "Papas tradicional"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-papas-fritas-base",
+          "nombre": "Base",
+          "precio_pyg": 17500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-papas-cheddar",
+      "nombre": "Papas cheddar",
+      "categoria": "Acompañamientos",
+      "alias": [
+        "Papas con cheddar"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-papas-cheddar-base",
+          "nombre": "Base",
+          "precio_pyg": 22500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-6",
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-papas-catu",
+      "nombre": "Papas catu",
+      "categoria": "Acompañamientos",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-papas-catu-base",
+          "nombre": "Base",
+          "precio_pyg": 25500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-6",
+            "imagen-10"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-bolitas-noisettes",
+      "nombre": "Bolitas noisettes",
+      "categoria": "Acompañamientos",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-bolitas-noisettes-base",
+          "nombre": "Base",
+          "precio_pyg": 34500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-mandioca-frita",
+      "nombre": "Mandioca frita",
+      "categoria": "Acompañamientos",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-mandioca-frita-base",
+          "nombre": "Base",
+          "precio_pyg": 14500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "acompanamientos-mandiocheddar",
+      "nombre": "Mandiocheddar",
+      "categoria": "Acompañamientos",
+      "alias": [
+        "Mandio cheddar"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "acompanamientos-mandiocheddar-verdeo",
+          "nombre": "Verdeo",
+          "precio_pyg": 19500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "picadas-picada-san-felipe",
+      "nombre": "Picada San Felipe",
+      "categoria": "Picadas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "picadas-picada-san-felipe-base",
+          "nombre": "Base",
+          "precio_pyg": 95000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "picadas-picada-tradicional",
+      "nombre": "Picada tradicional",
+      "categoria": "Picadas",
+      "alias": [],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "picadas-picada-tradicional-base",
+          "nombre": "Base",
+          "precio_pyg": 95000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-7"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ensaladas-caesar-salad",
+      "nombre": "Caesar Salad",
+      "categoria": "Ensaladas",
+      "alias": [
+        "Caesar"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "ensaladas-caesar-salad-base",
+          "nombre": "Base",
+          "precio_pyg": 35000,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-11"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hamburguesas-clasica",
+      "nombre": "Clásica",
+      "categoria": "Hamburguesas",
+      "alias": [
+        "Clasica"
+      ],
+      "disponibilidad": null,
+      "variantes": [
+        {
+          "id": "hamburguesas-clasica-base",
+          "nombre": "Base",
+          "precio_pyg": 39500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-15"
+          ]
+        },
+        {
+          "id": "hamburguesas-clasica-doble",
+          "nombre": "Doble",
+          "precio_pyg": 59500,
+          "estado_precio": "transcrito_de_imagen",
+          "fuentes": [
+            "imagen-14",
+            "imagen-15"
+          ]
+        }
+      ]
+    }
+  ],
+  "resumen": {
+    "productos": 45,
+    "variantes_con_precio": 69,
+    "precios_transcritos": 69,
+    "referencias_no_confirmadas_fuera_del_catalogo_de_pedidos": 6
+  },
+  "referencias_no_confirmadas": [
+    {
+      "producto_asociado": "Cheese Bacon",
+      "mencion_en_descripcion": "Triple",
+      "observacion": "La descripción menciona Triple, pero el precio está fuera del recorte.",
+      "fuentes": [
+        "imagen-4"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    },
+    {
+      "producto_asociado": "Guarnipitan",
+      "mencion_en_descripcion": "Triple",
+      "observacion": "Se ve 'Triple Gu...' sin importe. No deducir el precio.",
+      "fuentes": [
+        "imagen-9"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    },
+    {
+      "producto_asociado": "Completa",
+      "mencion_en_descripcion": "Triple",
+      "observacion": "Se ve 'Triple Com...' sin importe. No deducir el precio.",
+      "fuentes": [
+        "imagen-9"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    },
+    {
+      "producto_asociado": "Clásica con rúcula",
+      "mencion_en_descripcion": "Tetra",
+      "observacion": "Solo se ve 'Tetra 99...'. El importe completo no es legible.",
+      "fuentes": [
+        "imagen-11"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    },
+    {
+      "producto_asociado": "Mandiocheddar",
+      "mencion_en_descripcion": "Panceta",
+      "observacion": "Se ve 'MANDIO CHEDDAR PANCETA: 22.5...'. Falta el importe completo.",
+      "fuentes": [
+        "imagen-11"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    },
+    {
+      "producto_asociado": "Clásica",
+      "mencion_en_descripcion": "Triple",
+      "observacion": "Se ve 'Triple Clasica...' sin precio completo. No se registró como opción de pedido.",
+      "fuentes": [
+        "imagen-14",
+        "imagen-15"
+      ],
+      "estado": "referencia_por_verificar",
+      "incluir_como_opcion_de_pedido": false
+    }
+  ]
+}

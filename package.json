@@ -1,0 +1,21 @@
+{
+  "name": "el-viejo-crm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "test:db": "node --test --test-concurrency=1 tests/database.test.mjs tests/location-database.test.mjs tests/viejo-database.test.mjs tests/v11-database.test.mjs tests/v11-permissions.test.mjs",
+    "test:unit": "node --test tests/order-engine.test.mjs tests/webhook.test.mjs tests/admin-delete.test.mjs tests/locations.test.mjs tests/el-viejo.test.mjs tests/integrations.test.mjs tests/v11-vision.test.mjs tests/v11-storage.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
+    "playwright-core": "1.58.2"
+  },
+  "packageManager": "pnpm@11.25.0"
+}
