@@ -29,7 +29,19 @@ export function migrateCatalogDemo(d){
  }d.catalogMigrationV13=true;
 }
 export function withCategories(products,categories){return products.map(p=>({...p,category:categories.find(c=>c.id===p.category_id)?.name||p.category,category_active:categories.find(c=>c.id===p.category_id)?.active??true}));}
-// Equivalencias gramaticales acotadas. Nunca convierte bollo en bollito ni usa categorías como alias.
-export const commercialText=text=>categoryKey(text).replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(x=>x&&!['de','del'].includes(x)).map(x=>x.length>3&&x.endsWith('s')&&!['tres','seis','gracias','mas'].includes(x)?x.slice(0,-1):x).join(' ');
-export function productTerms(p){const full=p.name+(p.variant&&p.variant!=='Base'?' '+p.variant:'');return [...new Set([full,...(p.aliases||[]),p.name].map(commercialText))].filter(Boolean);}
+// Plurales regulares, no semejanzas gastronómicas ni coincidencias parciales.
+export function singularWord(word){
+ if(['tres','seis','gracias','mas','lunes','martes','miercoles','jueves','viernes'].includes(word))return word;
+ if(word.length>4&&/(?:[lrn]es|ches)$/.test(word))return word.slice(0,-2);
+ return word.length>3&&/[aeiou]s$/.test(word)?word.slice(0,-1):word;
+}
+export const commercialText=text=>categoryKey(text).replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(x=>x&&!['de','del'].includes(x)).map(singularWord).join(' ');
+export function productTerms(p){
+ const name=commercialText(p.name),variant=p.variant&&p.variant!=='Base'?commercialText(p.variant):'',full=name+(variant?' '+variant:''),category=commercialText(p.category||'');
+ const terms=[full,name,...(p.aliases||[]).map(commercialText)];
+ if(variant)terms.push(name+' con '+variant);
+ // El nombre individual siempre debe estar presente: «Facturas» sola nunca es un producto equivalente.
+ if(category&&name!==category&&!name.startsWith(category+' '))terms.push(category+' '+full);
+ return [...new Set(terms)].filter(Boolean);
+}
 export function synonymCollisions(product,catalog){return catalog.filter(p=>p.id!==product.id&&productTerms(p).some(t=>productTerms(product).includes(t))).map(productName);}

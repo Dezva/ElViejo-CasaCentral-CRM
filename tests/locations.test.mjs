@@ -151,6 +151,7 @@ test('Worker: las respuestas de modalidad conservan productos sin IA y los fallo
   globalThis.fetch=async(endpoint,options={})=>{
    if(endpoint.includes('guarni_settings?'))return Response.json([{config:{bot_enabled:true}}]);
    if(endpoint.endsWith('guarni_claim')){if(claimed)return Response.json(null);claimed=true;return Response.json({kind:'inbound',job:{id:'job'},conversation:{id:'chat',mode:'bot',revision:0,client_id:'client',draft_location_id:body==='retiro'?'old-location':null,cart:{...quote('retiro').cart,service:'buffet',address:'Referencia anterior',items:[{variant_id:item.id,qty:2}]}},message:{content_type:'text',body}});}
+   if(endpoint.includes('guarni_locations?'))return Response.json([{id:'old-location',address:'Referencia anterior'}]);
    if(endpoint.includes('viejo_menus?'))return Response.json(withMenu?[{day:localDate(),status:'published',items:[item]}]:[]);
    if(endpoint.includes('guarni_settings?'))return Response.json([{config:{bot_enabled:true}}]);
    if(endpoint.includes('crm_clients?'))return Response.json([{name:'Ana'}]);

@@ -20,7 +20,7 @@ export async function interpret(text,cart,catalog,settings){
   let command;try{command=JSON.parse(extractText(data));}catch{throw Error('invalid_interpretation');}
   try{validateInterpretation(command,text,cart,catalog,candidates);}catch(error){if(attempt===0&&candidates.length<catalog.length){candidates=recoverCandidates(text,cart,catalog,{expanded:true});continue;}return {intent:'clarify',message:'No pude confirmar todos los productos y cantidades. Conservamos tu carrito. Indicá cada variedad o pedí ayuda al equipo.'};}
   if(command.intent==='help'&&attempt===0&&candidates.length<catalog.length){candidates=recoverCandidates(text,cart,catalog,{expanded:true});continue;}
-  if(command.intent==='help')return {intent:'clarify',message:'¿Qué producto o variedad querés? Indicá cada artículo y su cantidad; el equipo puede ayudarte.'};
+  if(command.intent==='help')return {intent:'clarify',message:'No encontré una opción inequívoca en el catálogo vigente. ¿Qué artículo querés o preferís hablar con el equipo?'};
   if(!(settings.payment_methods||[]).includes(command.payment))command.payment='a_coordinar';return command;
  }
 }

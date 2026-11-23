@@ -16,7 +16,7 @@ test('Eliminación: sesión, rol, tipo, UUID y confirmación se verifican antes 
   globalThis.fetch=async(endpoint,options={})=>{
    if(endpoint.endsWith('/auth/v1/user'))return Response.json({id:'admin-user'});
    if(endpoint.includes('crm_members?'))return Response.json([{user_id:'admin-user',role}]);
-   assert.match(endpoint,/guarni_delete$/);deletes.push(JSON.parse(options.body));return Response.json({ok:true,orders:1});
+   assert.match(endpoint,/viejo_delete_(order|client)$/);deletes.push(JSON.parse(options.body));return Response.json({ok:true,orders:1});
   };
   assert.equal((await api(request('delete_record',{kind:'order',id,confirmation:'ELIMINAR'},false))).status,401);
   for(const action of ['delete_preview','delete_record'])assert.equal((await api(request(action,{kind:'order',id,confirmation:'ELIMINAR'}))).status,403);
@@ -27,9 +27,9 @@ test('Eliminación: sesión, rol, tipo, UUID y confirmación se verifican antes 
   assert.equal((await api(request('delete_preview',{kind:'client',id:'bad-id'}))).status,400);
   assert.equal(deletes.length,0);
   assert.equal((await api(request('delete_preview',{kind:'order',id,p_actor:'forged-user',p_confirm:true}))).status,200);
-  assert.deepEqual(deletes[0],{p_actor:'admin-user',p_kind:'order',p_id:id,p_confirm:false});
-  assert.equal((await api(request('delete_record',{kind:'client',id,confirmation:'ELIMINAR'}))).status,200);
-  assert.deepEqual(deletes[1],{p_actor:'admin-user',p_kind:'client',p_id:id,p_confirm:true});
+  assert.deepEqual(deletes[0],{p_actor:'admin-user',p_id:id,p_confirm:false,p_confirmation:null,p_preview_token:null,p_payment_ack:false});
+  assert.equal((await api(request('delete_record',{kind:'client',id,confirmation:'ELIMINAR',preview_token:'a'.repeat(32)}))).status,200);
+  assert.deepEqual(deletes[1],{p_actor:'admin-user',p_id:id,p_confirm:true,p_delete_orders:false,p_preview_token:'a'.repeat(32)});
  }finally{globalThis.fetch=oldFetch;for(const k of Object.keys(process.env))if(!(k in previous))delete process.env[k];Object.assign(process.env,previous);}
 });
 
@@ -39,7 +39,7 @@ test('Eliminación: explica qué migración falta sin exponer errores de la base
   Object.assign(process.env,{SUPABASE_URL:'https://example.supabase.co',SUPABASE_SECRET_KEY:'test-secret'});
   globalThis.fetch=async endpoint=>endpoint.endsWith('/auth/v1/user')?Response.json({id:'admin-user'}):endpoint.includes('crm_members?')?Response.json([{user_id:'admin-user',role:'admin'}]):Response.json({code:'PGRST202',message:'Internal schema details'},{status:404});
   const response=await api(request('delete_preview',{kind:'client',id}));assert.equal(response.status,409);
-  const data=await response.json();assert.match(data.error,/005_eliminacion_admin.sql/);assert.doesNotMatch(data.error,/Internal schema/);
+  const data=await response.json();assert.match(data.error,/015_historial_casa_central.sql/);assert.doesNotMatch(data.error,/Internal schema/);
  }finally{globalThis.fetch=oldFetch;for(const k of Object.keys(process.env))if(!(k in previous))delete process.env[k];Object.assign(process.env,previous);}
 });
 

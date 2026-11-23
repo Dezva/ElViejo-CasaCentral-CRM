@@ -17,6 +17,8 @@ Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Ca
    8. `011_configuracion_ux.sql`
    9. `013_metricas_ia.sql`
    10. `014_avisos_pedidos.sql`
+   11. `015_historial_casa_central.sql`
+   12. `016_pedidos_finanzas_buffet.sql`
 
    Omití 003, un marcador histórico, y 004, un ejemplo de alta. Los números 008 y 012 correspondían al catálogo de chipería excluido de Casa Central. Los nombres internos históricos identifican estructuras reutilizadas. Para fotos privadas aplicá, al final, `database/storage/001_menu_private_bucket.sql` y confirmá en **Storage** que el bucket `el-viejo-menu-private` es privado.
 
@@ -115,7 +117,7 @@ Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Ca
 ## F. Validación de extremo a extremo
 
 1. Publicá un menú ficticio en el sitio aislado. Para probar el asistente con autorización, activá `BOT_ENABLED=true` en Functions y habilitalo en **Configuración** del CRM. Iniciá el chat desde el número de prueba.
-2. Consultá el menú y pedí dos platos con cantidades. Probá un agotado. Completá una solicitud de retiro y otra de delivery enviando punto y referencia. Verificá que aparecen como pendientes, sin precio automático.
+2. Consultá el menú y pedí dos platos con cantidades. Probá un agotado. Completá una solicitud de retiro y otra de delivery enviando un punto válido de WhatsApp (referencia escrita opcional). Verificá que aparecen como pendientes, sin precio automático.
 3. Tomá la conversación, coordiná importe y disponibilidad y confirmá cada pedido. En delivery, ingresá explícitamente el costo. Verificá el cambio de estado, el historial y, si el envío se autorizó, la recepción en el teléfono.
 4. Verificá que el empleado con permiso puede publicar, que un usuario sin el permiso no puede hacerlo y que el administrador conserva el acceso a configuración. Revisá el sitio en móvil.
 5. Registrá en el [checklist](CHECKLIST_DESPLIEGUE_CASA_CENTRAL.md) la evidencia de cada etapa. Anotá la rama, el commit y el contexto, sin incluir claves, sesiones ni datos personales.
