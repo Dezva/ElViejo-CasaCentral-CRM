@@ -1,4 +1,5 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
+import {workerToken} from './worker-auth.mjs';
 export const env=(key,fallback='')=>process.env[key]??fallback;
 export function json(data,status=200){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}});}
 // Adaptado del verificador de Veli, conservando comparación en tiempo constante.
@@ -33,11 +34,14 @@ export async function member(request){
  return rows[0];
 }
 export async function kick(request){
- const secret=env('WORKER_SECRET');if(!secret)return;
- const origin=new URL(request.url).origin;
- try{await fetch(origin+'/.netlify/functions/dispatch-background',{method:'POST',headers:{'x-worker-secret':secret},signal:AbortSignal.timeout(2500)});}catch{/* La función programada recupera la cola. */}
+ try{await dispatchWorker(new URL(request.url).origin,{timeoutMs:2500});}catch{/* La función programada recupera la cola. */}
 }
-export function safeSecretEqual(a,b){if(!a||!b)return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y);}
+export function dispatchWorker(origin,{timeoutMs}){
+ const token=workerToken(env('WORKER_SECRET'));
+ const target=new URL('/.netlify/functions/dispatch-background',origin);
+ if(!token||!['https:','http:'].includes(target.protocol)||target.username||target.password)throw Error('worker_not_configured');
+ return fetch(target,{method:'POST',redirect:'error',headers:{'x-worker-secret':token},signal:AbortSignal.timeout(timeoutMs)});
+}
 // Extracción de texto reutilizada del recorrido Responses de Veli.
 export function extractText(data){
  if(typeof data?.output_text==='string'&&data.output_text.trim())return data.output_text.trim();

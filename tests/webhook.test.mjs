@@ -75,3 +75,22 @@ test('Diagnóstico: conserva el código de Meta y elimina credenciales del mensa
 test('GET público del webhook no se anuncia como prueba de entrega de mensajes',async()=>{
  const response=await webhook(new Request(url));const result=await response.json();assert.equal(result.diagnostics_version,1);assert.match(result.note,/POST desde Meta/);
 });
+
+test('Webhook firmado despierta el worker con HMAC ASCII después de persistir en la cola',async t=>{
+ const oldEnv={...process.env};
+ t.after(()=>{for(const key of Object.keys(process.env))if(!(key in oldEnv))delete process.env[key];Object.assign(process.env,oldEnv);});
+ Object.assign(process.env,{SUPABASE_URL:'https://fixture.supabase.test',SUPABASE_SECRET_KEY:'test-secret',META_APP_SECRET:'fixture-meta',WHATSAPP_PHONE_NUMBER_ID:'111111',WORKER_SECRET:'fixture–á–🔑'});
+ const destinations=[];
+ t.mock.method(globalThis,'fetch',async(input,options)=>{
+  const target=new URL(input);destinations.push(target.pathname);
+  if(target.pathname.endsWith('guarni_ingest'))return Response.json({duplicate:false});
+  assert.equal(target.pathname,'/.netlify/functions/dispatch-background');
+  assert.equal(options.redirect,'error');
+  assert.equal(new Headers(options.headers).get('x-worker-secret'),'v1.'+createHmac('sha256',process.env.WORKER_SECRET).update('el-viejo:dispatch-background:v1').digest('hex'));
+  return new Response(null,{status:202});
+ });
+ const raw=JSON.stringify({entry:[{changes:[{value:{metadata:{phone_number_id:'111111'},messages:[{from:'595000000111',id:'fixture-event',type:'text',text:{body:'hola'}}] }}]}]});
+ const signature='sha256='+createHmac('sha256',process.env.META_APP_SECRET).update(raw).digest('hex');
+ assert.equal((await webhook(new Request(url,{method:'POST',body:raw,headers:{'x-hub-signature-256':signature}}))).status,200);
+ assert.deepEqual(destinations,['/rest/v1/rpc/guarni_ingest','/.netlify/functions/dispatch-background']);
+});

@@ -60,15 +60,15 @@ test('Proveedor simulado amplía candidatos, informa métricas y valida cantidad
   }
 });
 
-test('Worker registra el menú vigente y métricas privadas con el proveedor simulado', async () => {
-  const context = await databaseV11();
+test('Worker usa el menú vigente y conserva métricas privadas de la IA de respaldo', async () => {
+  const context = await databaseV11({ casa: true });
   const restore = mockEnvironment();
   const savedFetch = globalThis.fetch;
   let providerCalls = 0;
   try {
     globalThis.fetch = restBridge(context, { onAI: () => {
       providerCalls++;
-      return { output_text: JSON.stringify(output('update_cart', [guazu])), usage: { input_tokens: 10, output_tokens: 3, total_tokens: 13 } };
+      return { output_text: JSON.stringify(output()), usage: { input_tokens: 10, output_tokens: 3, total_tokens: 13 } };
     } }).fetch;
     const { config } = await context.one('select config from guarni_settings');
     await context.staff('settings', { config: { ...config, bot_enabled: true } });
@@ -80,14 +80,16 @@ test('Worker registra el menú vigente y métricas privadas con el proveedor sim
     };
     const ordered = await say('pasame dos chipas guazú bien calientes');
     assert.equal(ordered.items[0].qty, 2);
-    assert.equal(ordered.items[0].notes, guazu.notes);
+    assert.equal(ordered.items[0].notes, 'bien calientes');
     assert.equal(ordered.subtotal, null);
-    assert.equal(providerCalls, 1);
+    assert.equal(providerCalls, 0);
+    assert.deepEqual((await say('Esa cuestión que comentábamos')).items, ordered.items);
+    assert.equal(providerCalls, 2);
     await context.staff('menu', menu(dishes.map(d => ({ ...d, available: d.id !== 'guazu' }))));
-    assert.deepEqual((await say('dos chipas guazú')).items, ordered.items);
-    assert.equal(providerCalls, 1);
+    assert.deepEqual((await say('dos chipas guazú')).items, []);
+    assert.equal(providerCalls, 2);
     await assert.rejects(context.rpc('viejo_quote', ['buffet', ordered.items]), /price_or_availability_changed/);
-    assert.equal((await context.one('select count(*)::int n from viejo_ai_usage')).n, 1);
+    assert.equal((await context.one('select count(*)::int n from viejo_ai_usage')).n, 2);
     await context.db.exec('set role authenticated');
     await assert.rejects(context.db.exec('select * from viejo_ai_usage'), /permission denied/);
     await assert.rejects(context.db.exec("insert into viejo_ai_usage(model,operation) values('x','conversation')"), /permission denied/);

@@ -1,5 +1,5 @@
 import {categoryKey} from './catalog.js';
-export function orderStatusRequested(text){const t=categoryKey(text);return /\b(?:pedido|solicitud|carrito)\b/.test(t)&&/\b(?:tienes|tenes|tengo|esta|quedo|estado|como|almacenad\w*|guardad\w*|registrad\w*|confirmad\w*|envie|hice|falta)\b/.test(t);}
+export function orderStatusRequested(text){const t=categoryKey(text);return /\b(?:pedido|solicitud|carrito)\b/.test(t)&&/\b(?:tienes|tenes|tengo|esta|quedo|estado|como|va|almacenad\w*|guardad\w*|registrad\w*|recibier\w*|confirmad\w*|envie|hice|falta)\b/.test(t);}
 export function registeredOrderCommand(text,order){
  if(!orderStatusRequested(text))return null;
  if(!order)return {intent:'status_reply',message:'No veo una solicitud registrada en esta conversación. Decime los productos y cantidades que querés pedir.'};

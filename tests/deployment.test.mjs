@@ -64,7 +64,7 @@ test('Cron dispara el worker protegido y recupera un trabajo con reserva vencida
   const context = await databaseV11();
   t.after(() => context.db.close());
   t.after(mockEnvironment());
-  Object.assign(process.env, { URL: 'https://fixture.test', WORKER_SECRET: 'fixture-worker', BOT_ENABLED: 'false' });
+  Object.assign(process.env, { URL: 'https://fixture.test', WORKER_SECRET: 'fixture–á–🔑', BOT_ENABLED: 'false' });
   const incoming = await context.rpc('guarni_ingest', ['fixture-recovery', '595000000000', 'Prueba', 'hola']);
   const claimed = await context.rpc('guarni_claim', [randomUUID()]);
   assert.equal(claimed.conversation.id, incoming.conversation_id);
@@ -76,12 +76,14 @@ test('Cron dispara el worker protegido y recupera un trabajo con reserva vencida
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (String(url) === dispatchUrl) {
       assert.equal(options.redirect, 'error');
+      assert.match(new Headers(options.headers).get('x-worker-secret'), /^v1\.[0-9a-f]{64}$/);
       const response = await dispatch(new Request(url, options));
       return response.ok ? new Response(null, { status: 202 }) : response;
     }
     return bridge.fetch(url, options);
   });
   assert.equal((await dispatch(new Request(dispatchUrl, { method: 'POST' }))).status, 403);
+  assert.equal((await dispatch(new Request(dispatchUrl, { method: 'POST', headers: {'x-worker-secret':'v1.'+'0'.repeat(64)} }))).status, 403);
   assert.equal(sweepConfig.schedule, '* * * * *');
   assert.equal((await sweep()).status, 200);
   assert.equal((await context.one('select status from guarni_jobs where id=$1', [claimed.job.id])).status, 'done');

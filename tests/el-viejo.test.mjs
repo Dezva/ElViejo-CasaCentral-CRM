@@ -22,12 +22,13 @@ test('Buffet acepta nombres legítimos y cantidades sin habilitar otro servicio'
   const unavailable = published(dishes.map(dish => dish.id === 'empanada' ? { ...dish, available: false } : dish));
   assert.doesNotMatch(say('menú', extra.cart, unavailable).reply, /Empanada/);
   assert.match(say('Una empanada de prueba', ordered.cart, unavailable).reply, /agotado/);
-  for (const [text, reply] of [['Quiero cambiar a Chipería El Viejo', /exclusivamente/], ['Quiero un plato desconocido', /No identifiqué/]]) {
-    const result = say(text, ordered.cart);
-    assert.match(result.reply, reply);
-    assert.deepEqual(result.cart.items, ordered.cart.items);
-    assert.equal(result.cart.service, 'buffet');
-  }
+  const other = say('Quiero cambiar a Chipería El Viejo', ordered.cart);
+  assert.match(other.reply, /exclusivamente/);
+  assert.deepEqual(other.cart.items, ordered.cart.items);
+  const invalid = say('Quiero un plato desconocido', ordered.cart);
+  assert.match(invalid.reply, /No encontré.*plato.*desconocido/);
+  assert.deepEqual(invalid.cart.items, []);
+  assert.equal(invalid.cart.service, 'buffet');
 });
 
 test('El buffet utiliza solo el menú publicado de hoy y descarta precios y cantidades incorrectas', () => {
