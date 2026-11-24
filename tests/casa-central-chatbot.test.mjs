@@ -56,6 +56,16 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  assert.deepEqual(mixed.cart.items,[]);
  assert.equal(mixed.mode,'bot');
 
+ const ambiguousMenu=[...dishes,{...dishes[1],id:'otra-milanesa',name:'Milanesa pollo'}];
+ await c.staff('menu',menu(ambiguousMenu));
+ await say('Quiero dos tallarines');
+ const ambiguous=await say('Quiero milanesa de pollo y sopa paraguaya');
+ assert.match(ambiguous.body,/nombres que no puedo distinguir/);
+ assert.match(ambiguous.body,/pedido completo/);
+ assert.deepEqual(ambiguous.cart.items,[]);
+ await c.staff('menu',menu());
+
+
  ordered=await say('Quiero una sopa sin cebolla y dos milanesas con poca sal.');
  assert.match(ordered.body,/¿Cuál preferís: .*Sopa paraguaya.*Sopa de maíz/);
  assert.deepEqual(ordered.cart.items,[]);

@@ -80,6 +80,16 @@ export function clarifyOptions(products,qty=1,operation='add'){
  const common=products.length&&products.every(p=>p.name===products[0].name),names=products.map(p=>common&&p.variant&&p.variant!=='Base'?p.variant:productName(p));
  return {intent:'clarify',message:'¿Cuál preferís: '+names.join(', ')+'?',context:{pending:{candidate_ids:products.map(p=>p.id),qty,operation},focus_ids:[]}};
 }
+function clarifyPurchase(products,qty,operation){
+ const command=clarifyOptions(products,qty,operation);
+ const names=products.map(productName);
+ if(new Set(names.map(commercialText)).size===names.length)return command;
+ const qualified=products.map(product=>[product.category,productName(product)].filter(Boolean).join(' · '));
+ if(new Set(qualified.map(commercialText)).size===qualified.length){
+  return {...command,message:'¿Cuál preferís: '+qualified.join(', ')+'? Indicá la categoría junto al plato.'};
+ }
+ return retryOrderCommand('Hay platos publicados con nombres que no puedo distinguir. El equipo puede ayudarte a identificarlos.');
+}
 export function requestedItems(found,cart,text){
  const items=new Map((cart?.items||[]).map(x=>[x.variant_id,{variant_id:x.variant_id,qty:x.qty,notes:x.notes||''}]));
  const savedPending=cart?.conversation?.pending?.operation==='remove'?null:cart?.conversation?.pending,pending=found.resolvingPending||found.matches.every(m=>m.variantOnly||savedPending?.candidate_ids?.includes(m.product.id))?savedPending:null,correction=orderOperation(text)==='set';
@@ -107,7 +117,8 @@ export function deterministicOrder(text,cart,catalog,found=matchCommercial(text,
  if(blocked.length)return {found,command:retryOrderCommand(blocked.map(m=>productName(m.product)+': agotado o no disponible en el menú de hoy').join('. ')+'.')};
  if([...found.matches,...found.ambiguous].some(m=>!validQuantity(m.qty)))return {found,command:retryOrderCommand(quantityWarning)};
  if(found.ambiguous.length){
-  const a=found.ambiguous[0],command=clarifyOptions(a.products,a.qty,operation);
+  const a=found.ambiguous[0],command=clarifyPurchase(a.products,a.qty,operation);
+  if(command.intent==='retry_order')return {found,command};
   command.context.pending.notes=a.notes||'';
   command.context.pending.resolved_items=found.matches.map(m=>({id:m.product.id,qty:m.qty,notes:m.notes||''}));
   command.context.pending.remaining=found.ambiguous.slice(1).map(m=>({candidate_ids:m.products.map(p=>p.id),qty:m.qty,notes:m.notes||''}));
@@ -120,7 +131,8 @@ export function deterministicOrder(text,cart,catalog,found=matchCommercial(text,
   if(pending.remaining?.length){
    const next=pending.remaining[0],options=catalog.filter(p=>next.candidate_ids.includes(p.id));
    if(!options.length)return {found,command:retryOrderCommand('Cambió la disponibilidad de los platos de la aclaración.')};
-   const command=clarifyOptions(options,next.qty,pending.operation);
+   const command=clarifyPurchase(options,next.qty,pending.operation);
+   if(command.intent==='retry_order')return {found,command};
    command.context.pending={...command.context.pending,resolved_items:resolved,remaining:pending.remaining.slice(1),notes:next.notes};
    return {found,command};
   }
