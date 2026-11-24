@@ -1,3 +1,4 @@
+import {referencePriceRequest} from './reference-prices.js';
 import {orderStatusRequested} from './order-status.js';
 import {deliveryStatusCommand,deliveryReferenceCommand} from './delivery-context.js';
 import {commercialText,productTerms,productName,sellable} from './catalog.js';
@@ -36,6 +37,7 @@ function quantityFollowup(text,cart,catalog){
  return {intent:'update_cart',items,context:{focus_ids:[id]},...(inlineFulfillment(text)?{fulfillment:inlineFulfillment(text)}:{})};
 }
 export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
+ const pricing=referencePriceRequest(text,cart);if(pricing)return pricing;
  if(orderStatusRequested(text)&&cart?.items?.length)return {intent:'draft_status'};
  const status=deliveryStatusCommand(text,cart);if(status)return status;
  const t=commercialText(text);
@@ -48,18 +50,18 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(isQuery&&/\bensalada\b/.test(t)&&!found.matches.length)return {intent:'menu',dish_ids:catalog.filter(dish=>/\bensalada\b/.test(commercialText(dish.name))).map(dish=>dish.id)};
  if(!found.matches.length&&!found.ambiguous.length){const followup=quantityFollowup(text,cart,catalog);if(followup)return followup;}
  const resolved=deterministicOrder(text,cart,catalog);
- if(/\b(precio|cuanto|cuesta|sale|tienen|hay|disponible)\b/.test(t)){
+ if(/\b(tienen|hay|disponible)\b/.test(t)){
   if(category&&!found.matches.length)return {intent:'menu',...category};
   const f=resolved.found;if(f.ambiguous.length||f.matches.some(m=>m.product.service==='buffet'?!m.product.available:!sellable(m.product)))return resolved.command?.intent==='clarify'?resolved.command:{intent:'clarify',message:'El equipo debe confirmar la variedad y su disponibilidad.'};
-  if(f.matches.length)return {intent:'clarify',message:f.matches.map(m=>productName(m.product)+': '+(m.product.service==='buffet'?'importe a acordar con el encargado':new Intl.NumberFormat('es-PY').format(m.product.price)+' Gs.')).join('\n')+'\nNo agregué productos al carrito.'};
-  return {intent:'clarify',message:'¿De qué producto querés consultar el precio?'};
+  if(f.matches.length)return {intent:'clarify',message:'Disponible hoy: '+f.matches.map(m=>productName(m.product)).join(', ')+'.'};
+  return {intent:'clarify',message:'No encontré ese plato en el menú publicado de hoy.'};
  }
  if(resolved.command)return resolved.command;
  if(/\b(?:repetir|lee|mensaje)\b/.test(t)&&!found.matches.length)return {intent:'clarify',message:cart?.conversation?.pending?'Decime la variedad que preferís; conservamos la cantidad que pediste.':'Decime qué producto o categoría querés revisar y te muestro solo esas opciones.'};
  return found.matches.length||found.ambiguous.length?null:deliveryReferenceCommand(text,cart);
 }
 export function validateInterpretation(command,text,cart,catalog,candidates){
- if(!command||typeof command!=='object'||!['update_cart','menu','info','summary','human','help'].includes(command.intent))throw Error('invalid_interpretation');
+ if(!command||typeof command!=='object'||!['update_cart','menu','info','summary','human','help','reference_prices'].includes(command.intent))throw Error('invalid_interpretation');
  if(command.intent==='menu'){const request=categoryRequest(text,catalog);if(request)Object.assign(command,request);else if(command.category){const group=categoryRequest(command.category,catalog);if(!group)throw Error('commercial_equivalence_unconfirmed');Object.assign(command,group);}return command;}
  if(command.intent!=='update_cart')return command;
  if(/^\s*no\s+(?:quiero|agreg|sum)/i.test(String(text)))throw Error('commercial_equivalence_unconfirmed');

@@ -30,7 +30,7 @@ test('Contexto compacto del buffet conserva candidatos y cantidades sin exponer 
   assert.equal(command.items.length, 2);
   assert.equal(command.items[1].qty, 3);
   assert.equal(quote(command.items, 'buffet', catalog).subtotal, null);
-  assert.match(deterministicConversation('cuánto cuesta la chipa guazú', cart, catalog).message, /encargado/);
+  assert.equal(deterministicConversation('cuánto cuesta la chipa guazú', cart, catalog).intent, 'reference_prices');
 });
 
 test('Proveedor simulado amplía candidatos, informa métricas y valida cantidades y disponibilidad', async () => {

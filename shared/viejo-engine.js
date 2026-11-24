@@ -1,3 +1,4 @@
+import {referencePriceRequest,referencePriceReply} from './reference-prices.js';
 import {deterministicConversation} from './conversation-context.js';
 import {deliveryMode,WEEK_DAYS} from './settings.js';
 import {CATEGORY_IDS,categoryName} from './buffet-categories.js';
@@ -65,8 +66,13 @@ export function demoCommand(text,cart,catalog){
 export function reduceOrder({text,cart:old,catalog,menus=[],command={},profileName='',settings=defaults,now=new Date()}){
  let cart=structuredClone({...emptyCart(profileName),...old,service:'buffet'});
  if(outsideBuffet(text))return {cart,kind:'reply',reply:'Este número corresponde exclusivamente a Buffet El Viejo — Casa Central.'};
- if(/^(hola|buenas|buenos dias|buenas tardes)[.!?]*$/.test(normalize(text)))return {cart,kind:'reply',reply:greeting};
+ if(/^(hola|buenas|buenos dias|buenas tardes)[.!?]*$/.test(normalize(text))){delete cart.reference_price_context;return {cart,kind:'reply',reply:greeting};}
  const list=activeCatalog(cart.service,catalog,menus,now);
+ if(command.intent==='reference_prices'||referencePriceRequest(text,cart)){
+  cart.reference_price_context=true;
+  return {cart,kind:'reply',reply:referencePriceReply(text,list,settings)};
+ }
+ delete cart.reference_price_context;
  if(/\b(humano|persona|encargado|empleado)\b/.test(normalize(text))||command.intent==='human')return {cart,kind:'human',reply:'El equipo continuará la atención. El asistente queda pausado.'};
  if(['/cancelar','/reiniciar','cancelar pedido'].includes(normalize(text)))return {cart:emptyCart(profileName,cart.service),kind:'reply',reply:'Borrador cancelado. Conservamos el historial.'};
  if(command.intent==='info'){

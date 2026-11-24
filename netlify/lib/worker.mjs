@@ -1,3 +1,4 @@
+import {referencePriceRequest} from '../../shared/reference-prices.js';
 import {orderStatusRequested,registeredOrderCommand} from '../../shared/order-status.js';
 import {hydrateDeliveryLocation,deliveryQueryRequested,registeredDeliveryCommand} from '../../shared/delivery-context.js';
 import {deterministicConversation} from '../../shared/conversation-context.js';
@@ -46,23 +47,23 @@ export async function runWorker({budgetMs=45000}={}){
    else {
     const [client,menus]=await Promise.all([db('/rest/v1/crm_clients?id=eq.'+c.client_id+'&select=name'),db('/rest/v1/viejo_menus?status=eq.published&day=eq.'+localDate()+'&select=id,day,status,items')]);
     const catalog=[];
-    const text=job.message.body;const cart={...(c.cart?.items?c.cart:emptyCart(client[0]?.name)),service:'buffet',delivery_location_id:c.draft_location_id||null};
+    const text=job.message.body;const cart={...emptyCart(client[0]?.name),...c.cart,service:'buffet',delivery_location_id:c.draft_location_id||null};
     if(c.draft_location_id){const points=await db('/rest/v1/guarni_locations?id=eq.'+c.draft_location_id+'&conversation_id=eq.'+c.id+'&select=id,address,review_reason');Object.assign(cart,hydrateDeliveryLocation(cart,points.find(point=>point.review_reason!=='stale_location')));}
-    let command;
-    if(config.bot_enabled!==true){result={kind:'ignore',cart,reply:''};}
-    else {
-    if(outsideBuffet(text)||/^(hola|buenas|buenos días|buenas tardes)[.!?]*$/i.test(text.trim()))command={intent:'help'};
-    else if(!cart.items?.length&&(orderStatusRequested(text)||deliveryQueryRequested(text))){
-     const [lastOrder]=await db('/rest/v1/guarni_orders?conversation_id=eq.'+c.id+'&order=created_at.desc&limit=1&select=number,status,fulfillment,delivery_location_id');
-     command=orderStatusRequested(text)?registeredOrderCommand(text,lastOrder):registeredDeliveryCommand(lastOrder,cart);
-    }
-    else if(/^(men[uú]|carta|cat[aá]logo)[.!?]?$/i.test(text.trim()))command={intent:'menu'};
-    else if(fulfillmentChoice(text))command={intent:'summary',fulfillment:fulfillmentChoice(text)};
-    else if(!isConfirmation(text)&&!['/cancelar','/reiniciar','cancelar pedido'].includes(text.toLowerCase())&&!/\b(humano|persona|encargado|empleado)\b/i.test(text)){
-     try{command=deterministicConversation(text,cart,activeCatalog(cart.service,catalog,menus))||await interpret(text,cart,activeCatalog(cart.service,catalog,menus),config);}catch{command={intent:'human'};}
+    let command=referencePriceRequest(text,cart)??undefined;
+    if(!command){
+     if(outsideBuffet(text)||/^(hola|buenas|buenos días|buenas tardes)[.!?]*$/i.test(text.trim()))command={intent:'help'};
+     else if(!cart.items?.length&&(orderStatusRequested(text)||deliveryQueryRequested(text))){
+      const [lastOrder]=await db('/rest/v1/guarni_orders?conversation_id=eq.'+c.id+'&order=created_at.desc&limit=1&select=number,status,fulfillment,delivery_location_id');
+      command=orderStatusRequested(text)?registeredOrderCommand(text,lastOrder):registeredDeliveryCommand(lastOrder,cart);
+     }
+     else if(/^(men[uú]|carta|cat[aá]logo)[.!?]?$/i.test(text.trim()))command={intent:'menu'};
+     else if(fulfillmentChoice(text))command={intent:'summary',fulfillment:fulfillmentChoice(text)};
+     else if(!isConfirmation(text)&&!['/cancelar','/reiniciar','cancelar pedido'].includes(text.toLowerCase())&&!/\b(humano|persona|encargado|empleado)\b/i.test(text)){
+      const menu=activeCatalog(cart.service,catalog,menus);
+      try{command=deterministicConversation(text,cart,menu)||await interpret(text,cart,menu,config);}catch{command={intent:'human'};}
+     }
     }
     result=reduceOrder({text,cart,catalog,command,profileName:client[0]?.name,settings:config,menus});
-    }
    }
    await rpc('guarni_finish',{p_token:token,p_job:job.job.id,p_revision:c.revision,p_cart:result.cart,p_body:result.reply,p_kind:result.kind});
   }catch(error){await rpc('guarni_retry',{p_token:token,p_job:job.job.id,p_error:error.message});}
