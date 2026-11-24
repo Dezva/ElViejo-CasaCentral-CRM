@@ -12,7 +12,7 @@ const byName = new Map([
 ]);
 const priceTerms = /\b(?:precios?|tarifas?|costos?|cuanto (?:me |nos )?(?:cuesta|cuestan|sale|salen|vale|valen|esta|estan|es|seria|queda|quedaria|cobran)|(?:a|en) cuanto|a como|presupuesto|cotizacion)\b/;
 const quantityReply = /\b(?:\d+|un|una|unos|unas|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|media|medio|otra|otro|mas)\b/;
-const orderTerms = /\b(?:quiero|quisiera|necesito|deme|dame|agrega\w*|suma\w*|anad\w*|pedir|pido|llevo|mandame|enviame|cambia\w*|corrig\w*|corregi)\b/;
+const orderTerms = /\b(?:quiero|voy a querer|quisiera|necesito|deme|dame|agrega\w*|suma\w*|anad\w*|pedir|pido|llevo|mandame|enviame|cambia\w*|corrig\w*|corregi)\b/;
 const otherTopic = /^(?:hola|buenas|gracias|menu|carta|catalogo|que tienen|que hay|horarios?|forma de pago|metodo de pago|pago|ubicacion|localizacion|referencia|confirmo|confirmar|cancelar|reiniciar|retiro|delivery|a domicilio)\b/;
 const handoff = /\b(?:humano|persona|encargado|empleado)\b/;
 const finalAmount = /\b(?:total(?:es)?|subtotal(?:es)?|presupuesto|cotizacion|descuentos?|impuestos?|cuanto (?:me |nos )?(?:queda|quedaria)|(?:mi|el) pedido|envio|delivery)\b/;
