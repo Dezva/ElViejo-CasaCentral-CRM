@@ -50,7 +50,8 @@ export function referencePriceReply(text, menu, settings) {
     return 'Las tarifas por kilo son de referencia. El equipo revisa el pedido y determina el importe final y el costo de envío cuando corresponda.';
   }
 
-  const subject = subjectOf(text);
+  const question = value.replace(/^(?:[¡¿\s]*(?:hola|buenas(?: tardes| noches)?|buenos dias)\b[,.:!¡¿\s]*)+/, '');
+  const subject = subjectOf(question);
   if (!subject) {
     const rates = BUFFET_CATEGORIES.map(category => `• ${category.name} — ${rate(category, settings)}`);
     return ['Estas son nuestras tarifas de referencia por kilo:', ...rates, staff].join('\n');

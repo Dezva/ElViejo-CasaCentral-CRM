@@ -22,7 +22,7 @@ function say(text, { cart = emptyCart(), menus = [menu()], config = settings, co
 }
 
 test('Las consultas generales muestran las tres referencias configuradas incluso sin menú publicado', () => {
-  for (const text of ['¿Cuáles son los precios por kilo?', '¿Cuáles son las tarifas del buffet?']) {
+  for (const text of ['¿Cuáles son los precios por kilo?', 'Hola, ¿Cuáles son los precios por kilo?', 'Buenas tardes, ¿Cuáles son las tarifas del buffet?']) {
     const result = say(text, { menus: [] });
     assert.equal(result.kind, 'reply');
     for (const price of ['39.500', '51.000', '47.500']) assert.match(result.reply, new RegExp('Gs\\. '+price.replace('.', '\\.')));
@@ -137,10 +137,10 @@ test('WhatsApp utiliza cambios del CRM y solo registra solicitudes pendientes co
     await runWorker();
     return (await context.one("select body from guarni_messages where conversation_id=$1 and direction='outbound' order by created_at desc,id desc limit 1", [message.conversation_id])).body;
   };
-  assert.match(await inbound('¿Cuáles son los precios por kilo?'), /39\.500/);
+  assert.match(await inbound('Hola, ¿Cuáles son los precios por kilo?'), /39\.500/);
   assert.deepEqual((await context.one('select cart from guarni_conversations where id=$1', [chatId])).cart.items, []);
   await save({ ...prices, guarniciones: 42750 });
-  assert.match(await inbound('Del tallarín'), /42\.750/);
+  assert.match(await inbound('del tallarin'), /Tallarín.*Guarniciones.*42\.750 por kilo/);
   assert.deepEqual((await context.one('select cart from guarni_conversations where id=$1', [chatId])).cart.items, []);
   assert.match(await inbound('Quiero dos tallarines'), /2 × Tallarín/);
   assert.match(await inbound('Delivery'), /ubicación puntual/);
