@@ -1,3 +1,4 @@
+import {mediaDisposition} from './whatsapp-media.mjs';
 import {referencePriceRequest} from '../../shared/reference-prices.js';
 import {orderStatusRequested,registeredOrderCommand} from '../../shared/order-status.js';
 import {hydrateDeliveryLocation,deliveryQueryRequested,registeredDeliveryCommand} from '../../shared/delivery-context.js';
@@ -32,6 +33,12 @@ export async function runWorker({budgetMs=45000}={}){
   if(job.kind==='send'){await send(job,token);count++;continue;}
   const c=job.conversation;
   try{
+   const media=mediaDisposition(job.message);
+   if(media==='ignore'){
+    await rpc('guarni_finish',{p_token:token,p_job:job.job.id,p_revision:c.revision,p_cart:c.cart,p_body:'',p_kind:'ignore'});
+    count++;
+    continue;
+   }
    const settings=await db('/rest/v1/guarni_settings?id=eq.true');
    const config={...defaults,...settings[0]?.config};
    const botEnabled=env('BOT_ENABLED')==='true'&&config.bot_enabled===true;
@@ -43,7 +50,7 @@ export async function runWorker({budgetMs=45000}={}){
    let result;
    if(c.mode==='human'||!botEnabled)result={kind:'ignore',cart:c.cart,reply:''};
    else if(/^\[Contenido (location|live_location) recibido:/.test(job.message.body))result={kind:'reply',cart:c.cart,reply:'Para adjuntar la ubicación a tu pedido, enviame tu ubicación actual puntual desde WhatsApp 📍.'};
-   else if(job.message.body.startsWith('[Contenido '))result={kind:'human',cart:c.cart,reply:'Recibí un archivo. El equipo continuará la atención por este chat.'};
+   else if(media==='ask_text')result={kind:'reply',cart:c.cart,reply:'Recibí un archivo. Para ayudarte, escribime en texto qué necesitás. Si preferís hablar con una persona, decímelo.'};
    else {
     const [client,menus]=await Promise.all([db('/rest/v1/crm_clients?id=eq.'+c.client_id+'&select=name'),db('/rest/v1/viejo_menus?status=eq.published&day=eq.'+localDate()+'&select=id,day,status,items')]);
     const catalog=[];

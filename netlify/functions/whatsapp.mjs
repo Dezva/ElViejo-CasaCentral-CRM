@@ -1,3 +1,4 @@
+import {mediaReceipt} from '../lib/whatsapp-media.mjs';
 import {env,json,verifySignature,rpc,kick} from '../lib/platform.mjs';
 import {safeDiagnosticError} from '../lib/diagnostics.mjs';
 import {parseLocationMessage} from '../../shared/locations.js';
@@ -36,7 +37,7 @@ export default async request=>{
      if(saved?.duplicate)counts.duplicates++;else counts.accepted++;
      continue;
     }
-    const body=m.type==='text'?m.text?.body:m.type==='interactive'?(m.interactive?.button_reply?.title||m.interactive?.list_reply?.title):`[Contenido ${m.type||'multimedia'} recibido: requiere atención humana]`;
+    const body=m.type==='text'?m.text?.body:m.type==='interactive'?(m.interactive?.button_reply?.title||m.interactive?.list_reply?.title):mediaReceipt(m);
     if(!body)continue;
     const saved=await rpc('guarni_ingest',{p_external:m.id,p_wa:m.from,p_name:profile,p_body:String(body).slice(0,4096)});
     if(saved?.duplicate)counts.duplicates++;else counts.accepted++;
