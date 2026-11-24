@@ -54,7 +54,10 @@ export function confirmation(order,input,catalog,{mode,owner_id,actor,menus=[],n
  return {...q,subtotal:amount,shipping_fee:fee,total:amount+fee};
 }
 export function sameItems(a,b){const fields=['variant_id','name','variant','qty','unit_price','notes'];return JSON.stringify(a.map(x=>fields.map(k=>x[k])))===JSON.stringify(b.map(x=>fields.map(k=>x[k])));}
-export function summary(cart){return cart.items.map(x=>`${x.qty} × ${x.name}`).join('\n')+'\nImporte pendiente: el encargado lo acordará con vos.\nModalidad: '+cart.fulfillment+'.';}
+export function summary(cart){
+ const modality={retiro:'Retiro en el local',delivery:'Delivery'}[cart.fulfillment]||'A coordinar';
+ return cart.items.map(x=>`${x.qty} × ${x.name}`).join('\n')+'\nImporte pendiente: el encargado lo acordará con vos.\nModalidad: '+modality+'.';
+}
 export function demoCommand(text,cart,catalog){
  const t=normalize(text),choice=fulfillmentChoice(text);
  if(choice)return {intent:'summary',fulfillment:choice};
