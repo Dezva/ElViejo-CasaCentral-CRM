@@ -11,6 +11,7 @@ const byName = new Map([
   ['pollo y chancho', 'pollo_chancho'], ['pollo y cerdo', 'pollo_chancho'],
 ]);
 const priceTerms = /\b(?:precios?|tarifas?|costos?|cuanto (?:me |nos )?(?:cuesta|cuestan|sale|salen|vale|valen|esta|estan|es|seria|queda|quedaria|cobran)|(?:a|en) cuanto|a como|presupuesto|cotizacion)\b/;
+const quantityReply = /\b(?:\d+|un|una|unos|unas|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|media|medio|otra|otro|mas)\b/;
 const orderTerms = /\b(?:quiero|quisiera|necesito|deme|dame|agrega\w*|suma\w*|anad\w*|pedir|pido|llevo|mandame|enviame|cambia\w*|corrig\w*|corregi)\b/;
 const otherTopic = /^(?:hola|buenas|gracias|menu|carta|catalogo|que tienen|que hay|horarios?|forma de pago|metodo de pago|pago|ubicacion|localizacion|referencia|confirmo|confirmar|cancelar|reiniciar|retiro|delivery|a domicilio)\b/;
 const handoff = /\b(?:humano|persona|encargado|empleado)\b/;
@@ -29,7 +30,7 @@ export function referencePriceRequest(text, cart) {
   if (priceTerms.test(value) || /^(?:y )?(?:cuanto|por (?:kilos?|kg|kilogramos?))\b/.test(value) &&
       !/\b(?:tarda|demora|dura|tiempo)\b/.test(value)) return { intent: 'reference_prices' };
   // Un nombre suelto después de una consulta sigue siendo una consulta.
-  if (cart?.reference_price_context && value && !orderTerms.test(value) && !otherTopic.test(value) &&
+  if (cart?.reference_price_context && value && !orderTerms.test(value) && !quantityReply.test(value) && !otherTopic.test(value) &&
       !handoff.test(value) && !fulfillmentChoice(value) && !orderStatusRequested(value) &&
       !deliveryQueryRequested(text) && !deliveryReferenceCommand(text, cart)) {
     return { intent: 'reference_prices' };
