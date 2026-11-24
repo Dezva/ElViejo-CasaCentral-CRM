@@ -142,6 +142,11 @@ test('WhatsApp utiliza cambios del CRM y solo registra solicitudes pendientes co
   await save({ ...prices, guarniciones: 42750 });
   assert.match(await inbound('del tallarin'), /Tallarín.*Guarniciones.*42\.750 por kilo/);
   assert.deepEqual((await context.one('select cart from guarni_conversations where id=$1', [chatId])).cart.items, []);
+  const orderRequest = await inbound('voy a querer el tallarin');
+  assert.match(orderRequest, /1 × Tallarín/);
+  assert.match(orderRequest, /Modalidad: A coordinar/);
+  assert.match(orderRequest, /¿Será retiro o delivery\?/);
+  assert.doesNotMatch(orderRequest, /a_coordinar/);
   assert.match(await inbound('Quiero dos tallarines'), /2 × Tallarín/);
   assert.match(await inbound('Delivery'), /ubicación puntual/);
   assert.match(await inbound('¿Cuánto sale el total del pedido?'), /equipo/);
