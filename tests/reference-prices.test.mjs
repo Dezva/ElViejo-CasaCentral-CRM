@@ -91,6 +91,16 @@ test('La consulta y el seguimiento preservan el borrador y no calculan importes'
   assert.equal(explicit.cart.reference_price_context, undefined);
 });
 
+test('Un pedido con cantidad después de consultar una tarifa no queda atrapado en contexto de precios', () => {
+  const consult = say('¿Cuáles son los precios por kilo?');
+  assert.equal(consult.cart.reference_price_context, true);
+  for (const text of ['2 tallarines', 'una milanesa de pollo']) {
+    const response = say(text, { cart: consult.cart });
+    assert.equal(response.cart.reference_price_context, undefined, text);
+    assert.doesNotMatch(response.reply, /tarifas de referencia|referencia por kilo|Gs\. 39\.500/, text);
+  }
+});
+
 test('La IA puede señalar consulta, pero sus datos no modifican el pedido ni determinan precios', async t => {
   t.after(mockEnvironment());
   const active = activeCatalog('buffet', [], [menu()]);
