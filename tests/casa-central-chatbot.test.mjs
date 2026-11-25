@@ -49,6 +49,19 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  assert.doesNotMatch((await say('¿Qué tienen hoy?')).body,/histórica|en borrador|Bife/);
  let ordered=await say('Quiero dos tallarines.\nMilanesa 2, Sopa paraguaya 1');
  assert.deepEqual(lines(ordered.cart),[['tallarin',2,''],['milanesa',2,''],['sopa',1,'']]);
+ ordered=await say('Hola, para mí serían dos tallarines y una sopa paraguaya porfa');
+ assert.deepEqual(lines(ordered.cart),[['tallarin',2,''],['milanesa',2,''],['sopa',1,'']]);
+ assert.match(ordered.body,/2 × Tallarín/);
+ assert.deepEqual(lines((await say('¿Me podés agregar otra milanesa?')).cart),[['tallarin',2,''],['milanesa',3,''],['sopa',1,'']]);
+ for(const text of ['¿Me sacaste una milanesa?', 'Me sacaste una milanesa']){
+  assert.deepEqual(lines((await say(text)).cart),[['tallarin',2,''],['milanesa',3,''],['sopa',1,'']]);
+ }
+ assert.deepEqual(lines((await say('¿Podés sacar una milanesa?')).cart),[['tallarin',2,''],['milanesa',2,''],['sopa',1,'']]);
+ for(const text of ['¿Me anotás dos tallarines?', 'Quiero encargar dos tallarines']){
+  ordered=await say(text);
+  assert.deepEqual(lines(ordered.cart),[['tallarin',2,''],['milanesa',2,''],['sopa',1,'']]);
+  assert.match(ordered.body,/2 × Tallarín/);
+ }
  const old=ordered.cart.items;
  const mixed=await say('Quiero dos milanesas de carne y una sopa paraguaya.');
  assert.match(mixed.body,/no encontré.*milanesa.*carne/i);
@@ -88,7 +101,7 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  const incremented=await say(increment);
  assert.deepEqual(lines(incremented.cart),[['tallarin',5,'']]);
  assert.deepEqual((await say(increment)).cart,incremented.cart);
- await say('Al final quiero tres');
+ await say('Mejor dejame tres');
  await say('Bien caliente.');
  await say('Agregame dos milanesas con poca sal');
  const corrected=await say('Sacame las milanesas.');
@@ -112,6 +125,14 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
   ['??? quiero el menu de hoy',/Sopa paraguaya/],
   ['Quiero ver el menú de hoy',/Sopa paraguaya/],
   ['Hola, ¿me mostrás el menú de hoy, por favor?',/Sopa paraguaya/],
+  ['Me pasan la ubicación del local',/Dirección de prueba 123/],
+  ['Todavía están abiertos',/Horario de atención pendiente/],
+  ['Aceptan transferencia',/Transferencia/],['Hacen envíos?',/equipo.*delivery/],
+  ['¿Tenés milanesas de pollo?',/disponible en el menú/],
+  ['¿Les queda tallarín o ya se terminó?',/disponible en el menú/],
+  ['Capaz pida un tallarín más tarde',/borrador sigue guardado/],
+  ['¿Me anotás dos o tres tallarines?',/qué cantidad/],
+  ['Mi hijo come tallarín',/pedir ese plato o consultarme/],
   ['¿Dónde están ubicados?',/Dirección de prueba 123/],
   ['¿Hasta qué hora atienden?',/Horario de atención pendiente/],['¿Tienen delivery?',/equipo.*delivery/],
   ['¿Puedo pagar por transferencia?',/Transferencia/],['¿Tienen tallarín?',/disponible/],
@@ -132,7 +153,16 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  const {reference_price_context:reference,...draft}=price.cart;
  assert.equal(reference,true);
  assert.deepEqual(draft,before);
+ const naturalPrice=await say('Cuánto me saldría el kilo de tallarín');
+ assert.match(naturalPrice.body,/Tallarín.*43\.210 por kilo/);
+ assert.deepEqual(naturalPrice.cart,price.cart);
  assert.equal(aiCalls,0);
+
+ ai=()=>answer({intent:'location',items:[],address:'inventada'});
+ const guided=await say('Me orientás para encontrarlos');
+ assert.match(guided.body,/Dirección de prueba 123/);
+ assert.deepEqual(guided.cart,price.cart);
+ assert.equal(aiCalls,1);
 
  for(const provider of [
   () => Response.json({private:'secreto'}, {status:503}),
@@ -155,13 +185,15 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  assert.equal(sticker.n,beforeSticker.n);
  assert.deepEqual(sticker.cart,beforeSticker.cart);
 
- const pickup=await say('Es para llevar');
+ const pickup=await say('Paso por el local a buscarlo');
  assert.equal(pickup.cart.fulfillment,'retiro');
  assert.equal(pickup.draft_location_id,null);
- const uid=randomUUID(),sent=await say('CONFIRMAR PEDIDO',uid);
+ await say('Todavía no confirmo el pedido');
+ assert.equal((await c.one('select count(*)::int n from guarni_orders')).n,0);
+ const uid=randomUUID(),sent=await say('Sí, confirmo el pedido',uid);
  assert.match(sent.body,/PENDIENTE DE ACEPTACIÓN/);
  assert.equal(sent.mode,'human');
- assert.equal((await say('CONFIRMAR PEDIDO',uid)).duplicate,true);
+ assert.equal((await say('Sí, confirmo el pedido',uid)).duplicate,true);
  const order=await c.one('select * from guarni_orders');
  assert.equal(order.fulfillment,'retiro');
  assert.equal(order.delivery_location_id,null);

@@ -3,7 +3,7 @@ import {commercialText,productTerms,productName,sellable} from './catalog.js';
 import {correctOrderTokens} from './order-spelling.js';
 import {retryOrderCommand} from './order-retry.js';
 export const quantityWords={un:1,uno:1,una:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,otro:1,otra:1};
-export const orderFillers=new Set(commercialText('quiero quisiera querria dame deme llevo llevar necesito pedir pedido agregar agrega agregame por favor y e con para el la lo los las me mi a unidad unidades unidade gracias hola buenas voy querer solo solamente unicamente mas suma sumame sumar anade anadi te dije lee lea mensaje bien entonces das darias podes podrias podria traeme preparame pasame enviame mandame gustaria').split(' '));
+export const orderFillers=new Set(commercialText('quiero quisiera querria dame deme llevo llevar necesito pedir pedido agregar agrega agregame agregarme por favor porfa porfavor y e con para el la lo los las me mi nos a unidad unidades unidade gracias hola buenas voy querer solo solamente unicamente mas suma sumame sumar sumarme anade anadi te dije lee lea mensaje bien entonces das darias podes podrias podria podrian puede pueden traeme preparame prepara preparar prepararme pasame enviame mandame gustaria encargar encargame anota anotame anotar anotarme pone poneme poner ponerme mejor deja dejame dejar').split(' '));
 const filler=orderFillers;
 const literalWords=new Set([...filler,...Object.keys(quantityWords),'sin','poca','poco','extra']);
 // Una cantidad declarada establece el total; sumar requiere una intención de incremento.
@@ -11,9 +11,9 @@ export function orderText(text){
  let t=commercialText(text);if(/^\s*no\s*,/i.test(String(text)))t=t.replace(/^no\s+/,'');
  return t.replace(/\bno\s+(?:[0-9]+|un|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\b.*$/,'').trim();
 }
-export function orderOperation(text){const t=orderText(text);if(/\b(?:solo|solamente|unicamente|al final|en total|cambia|cambiar|cambiame|corrige|corregi|te dije)\b/.test(t))return 'set';return /\b(?:agrega|agregame|agregar|suma|sumame|sumar|anade|anadi|mas|otro|otra)\b/.test(t)?'add':'set';}
+export function orderOperation(text){const t=orderText(text);if(/\b(?:solo|solamente|unicamente|al final|en total|cambia|cambiar|cambiame|corrige|corregi|te dije)\b/.test(t))return 'set';return /\b(?:(?:agrega|suma)(?:me|r(?:me)?)?|anade|anadi|mas|otro|otra)\b/.test(t)?'add':'set';}
 export function inlineFulfillment(text){return fulfillmentIntent(text).choice;}
-function prepared(text){return orderText(stripFulfillment(text)).replace(/\b(?:lee|lea) (?:el )?mensaje(?: bien)?\b/g,' ').replace(/\b(?:deja|deje) repetir(?: el mismo mensaje)?\b/g,' ').trim();}
+function prepared(text){return orderText(stripFulfillment(text)).replace(/\bpara mi (?:seria|serian)\b/g,' ').replace(/\b(?:lee|lea) (?:el )?mensaje(?: bien)?\b/g,' ').replace(/\b(?:deja|deje) repetir(?: el mismo mensaje)?\b/g,' ').trim();}
 export function matchCommercial(text,catalog,{context}={}){
  const tokens=[],segments=[],terms=new Map(),shortNames=new Map();
  // La cantidad de una línea nunca pertenece a un producto de otra línea.

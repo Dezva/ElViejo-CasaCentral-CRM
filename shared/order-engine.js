@@ -1,7 +1,7 @@
 import {locationRequest,fulfillmentQuestion} from './locations.js';
 export const money = value => new Intl.NumberFormat('es-PY').format(value) + ' Gs.';
 export const normalize = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
-export const isConfirmation = s => /^(confirmar|confirmo)\s+(el\s+)?pedido[.!]?$/i.test(normalize(s));
+export const isConfirmation = s => /^(?:si[\s,]+)?(?:confirmar|confirmo|confirma|quiero confirmar)\s+(?:(?:el|mi)\s+)?pedido[.!]?$/.test(normalize(s));
 const fulfillmentAnswers={retiro:'retiro',retirar:'retiro','para retirar':'retiro','para retiro':'retiro','retirar en el local':'retiro','para retirar en el local':'retiro',delivery:'delivery','para delivery':'delivery','a domicilio':'delivery','envio a domicilio':'delivery',local:'local','en el local':'local'};
 export function fulfillmentChoice(text) {
  const key=normalize(text).replace(/[.!?]+$/,'');

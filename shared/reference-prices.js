@@ -12,7 +12,7 @@ const byName = new Map([
   ['pollo', 'pollo_chancho'], ['chancho', 'pollo_chancho'], ['cerdo', 'pollo_chancho'],
   ['pollo y chancho', 'pollo_chancho'], ['pollo y cerdo', 'pollo_chancho'],
 ]);
-const priceTerms = /\b(?:valor(?:es)?|precios?|tarifas?|costos?|cuanto (?:me |nos )?(?:cuesta|cuestan|sale|salen|vale|valen|esta|estan|es|seria|queda|quedaria|cobran)|(?:a|en) cuanto|a como|presupuesto|cotizacion)\b/;
+const priceTerms = /\b(?:valor(?:es)?|precios?|tarifas?|costos?|cuanto (?:me |nos )?(?:cuesta|cuestan|costaria|costarian|sale|salen|saldria|saldrian|vale|valen|esta|estan|es|seria|queda|quedaria|cobran)|(?:a|en) cuanto|a como|presupuesto|cotizacion)\b/;
 const writtenQuantities = Object.keys(quantityWords).join('|');
 const quantityReply = new RegExp(`\\b(?:\\d+|${writtenQuantities}|un[oa]s|medi[oa]|mas)\\b`);
 const weightAmount = new RegExp(`\\b(?:\\d+(?:[.,]\\d+)?\\s*|(?:${writtenQuantities}|medi[oa])\\s+)(?:kilos?|kilogramos?|kgr?)\\b`, 'g');
@@ -20,7 +20,7 @@ const orderTerms = /\b(?:quiero|voy a querer|quisiera|necesito|deme|dame|agrega\
 const otherTopic = /^(?:hola|buenas|gracias|perfecto|bien|ok|dale|listo|si|no|menu|carta|catalogo|que tienen|que hay|horarios?|forma de pago|metodo de pago|pago|ubicacion|localizacion|referencia|confirmo|confirmar|cancelar|reiniciar|retiro|delivery|a domicilio)\b/;
 const handoff = /\b(?:humano|persona|encargado|empleado)\b/;
 const finalAmount = /\b(?:total(?:es)?|subtotal(?:es)?|presupuesto|cotizacion|descuentos?|impuestos?|cuanto (?:me |nos )?(?:queda|quedaria)|(?:mi|el) pedido|envio|delivery)\b/;
-const subjectWords = new Set('a al como cual cuales cuanto cuesta cuestan sale salen vale valen esta estan es son seria precio tarifa costo valor figura kilo kilogramo kg kgr por el la lo los las un uno una y que tiene tienen tenes me nos uds ustedes cobra cobran saben saber podrias podes decir dirias decime dime pasame referencia buffet hoy ahora porfa favor gracias consultar consulta quiero quisiera para del de'.split(' '));
+const subjectWords = new Set('a al como cual cuales cuanto cuesta cuestan costaria costarian sale salen saldria saldrian vale valen esta estan es son seria precio tarifa costo valor figura kilo kilogramo kg kgr por el la lo los las un uno una y que tiene tienen tenes me nos uds ustedes cobra cobran saben saber podrias podes decir dirias decime dime pasame referencia buffet hoy ahora porfa favor gracias consultar consulta quiero quisiera para del de'.split(' '));
 const format = new Intl.NumberFormat('es-PY', { useGrouping: 'always' });
 const staff = 'El importe final de tu pedido lo confirma el encargado.';
 

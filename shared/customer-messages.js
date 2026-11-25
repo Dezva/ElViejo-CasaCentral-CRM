@@ -1,7 +1,7 @@
 import {commercialText,productName} from './catalog.js';
 import {WEEK_DAYS,deliveryMode} from './settings.js';
 
-const queryWords=new Set('que cual cuales tambien mas tienen tiene tenes hay habra tendran tendria venden vende disponible esta estan puedo podria podes favor porfa porfavor gracias hola buenas saber saberlo me decime decir decirme el la lo los las a con para quiero quisiera hoy ahora y e por su ustedes consulta consultar necesito solo solamente buffet'.split(' '));
+const queryWords=new Set(commercialText('que cual cuales tambien mas tienen tiene tenés hay habra tendran tendria venden vende disponible queda quedan agotó agotado terminó esta estan puedo podria podes favor porfa porfavor gracias hola buenas saber saberlo me decime decir decirme el la lo los las les se a con para quiero quisiera hoy ahora todavía ya o y e por su ustedes consulta consultar necesito solo solamente buffet').split(' '));
 const time=value=>typeof value==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 
 export function availabilityReply(found){
