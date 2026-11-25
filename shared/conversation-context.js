@@ -70,7 +70,7 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  const reference=deliveryReferenceCommand(text,cart);
  if(reference)return reference;
  const category=categoryRequest(text,catalog,categories.length?categories:BUFFET_CATEGORIES);
- const asksMenu=/^(?:menu(?: hoy)?|carta|catalogo|que tienen(?: hoy)?|que hay(?: hoy)?)$/.test(t)||state.topic==='menu'||/\bmenu\b/.test(t)&&/\b(?:mostrame|solo|ensalada)\b/.test(t);
+ const asksMenu=state.topic==='menu'||/^(?:que tienen|que hay)(?: hoy)?$/.test(t)||/\bmenu\b/.test(t)&&/\b(?:mostrame|solo|ensalada)\b/.test(t);
  if(asksMenu&&/\bensalada\b/.test(t))return {intent:'menu',dish_ids:catalog.filter(p=>/\bensalada\b/.test(commercialText(p.name))).map(p=>p.id)};
  if(asksMenu||category&&!hasProducts&&(state.kind==='query'||category.category_names.some(name=>commercialText(name)===t)))return {intent:'menu',...category};
  if(['location','payments','hours','fulfillment'].includes(state.topic))return {intent:'info',topic:state.topic};

@@ -104,17 +104,25 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
  await runWorker();
  const before=(await current()).cart;
  assert.ok(before.delivery_location_id);
+ let replies=(await c.one("select count(*)::int n from guarni_messages where conversation_id=$1 and direction='outbound'",[chat])).n;
  for(const [query,expected] of [
   ['Gracias.',/Gracias a vos/],['Muchas gracias.',/Gracias a vos/],['Perfecto.',/seguimos/],
-  ['Quiero ver el menú de hoy',/Sopa paraguaya/],['¿Dónde están ubicados?',/Dirección de prueba 123/],
+  ['Hola quiero que me digas el menu del buffet',/Sopa paraguaya/],
+  ['quiero el menu del día',/Sopa paraguaya/],
+  ['??? quiero el menu de hoy',/Sopa paraguaya/],
+  ['Quiero ver el menú de hoy',/Sopa paraguaya/],
+  ['Hola, ¿me mostrás el menú de hoy, por favor?',/Sopa paraguaya/],
+  ['¿Dónde están ubicados?',/Dirección de prueba 123/],
   ['¿Hasta qué hora atienden?',/Horario de atención pendiente/],['¿Tienen delivery?',/equipo.*delivery/],
   ['¿Puedo pagar por transferencia?',/Transferencia/],['¿Tienen tallarín?',/disponible/],
   ['¿Recibieron mi ubicación?',/Ya recibí tu ubicación/],['¿Cómo va mi pedido?',/borrador/],
   ['No quiero retiro',/retiro|retirar/],['Retiro no',/retiro|retirar/],['¿Es para llevar?',/retiro|retirar/],['Tienen delivery',/equipo.*delivery/],
  ]){
   const result=await say(query);
+  assert.equal(result.n,++replies,query);
   assert.match(result.body,expected,query);
   assert.deepEqual(result.cart,before,query);
+  assert.equal(result.mode,'bot',query);
  }
  const general=await say('Hola, ¿Cuáles son los precios por kilo?');
  assert.match(general.body,/43\.210 por kilo/);
