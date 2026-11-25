@@ -1,7 +1,7 @@
 import {commercialText,productName} from './catalog.js';
 import {matchCommercial,clarifyOptions} from './catalog-matching.js';
+import {removal} from './message-intent.js';
 
-const removal=/\b(?:quita\w*|saca\w*|elimina\w*|borra\w*)\b/;
 export function cartOperationCommand(text,cart,catalog){
  if(/^\s*(?:no|nunca)\b/i.test(text))return null;
  const t=commercialText(text),pending=cart?.conversation?.pending;

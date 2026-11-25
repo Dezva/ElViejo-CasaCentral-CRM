@@ -1,4 +1,5 @@
 import {BUFFET_CATEGORIES} from './buffet-categories.js';
+import {normalizeBranchIdentity} from './branch-identity.js';
 export const WEEK_DAYS=Object.freeze([{value:1,label:'Lunes'},{value:2,label:'Martes'},{value:3,label:'Miércoles'},{value:4,label:'Jueves'},{value:5,label:'Viernes'},{value:6,label:'Sábado'},{value:0,label:'Domingo'}]);
 export const PAYMENT_METHODS=Object.freeze([{value:'Efectivo',label:'Efectivo'},{value:'Tarjeta de débito',label:'Débito'},{value:'Tarjeta de crédito',label:'Crédito'},{value:'QR',label:'QR'},{value:'Transferencia',label:'Transferencia'}]);
 export const DELIVERY_MODES=Object.freeze(['scheduled','pending','disabled']);
@@ -10,7 +11,7 @@ export function deliveryMode(config,service){
  return time(s.delivery_open)&&time(s.delivery_close)?'scheduled':'pending';
 }
 export function normalizeSettings(config){
- const c=structuredClone(config);c.schedules??={};
+ const c=structuredClone(normalizeBranchIdentity(config));c.schedules??={};
  for(const service of ['buffet'])if(c.schedules[service])c.schedules[service].delivery_mode=deliveryMode(config,service);
  return c;
 }

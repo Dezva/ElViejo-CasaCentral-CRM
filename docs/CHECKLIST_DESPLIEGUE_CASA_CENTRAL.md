@@ -1,4 +1,4 @@
-# Checklist de entrega — Casa Central
+# Checklist de entrega — Ruta Villeta–Alberdi
 
 Marcá cada paso con evidencia del despliegue aislado. La columna de cobertura describe lo que puede comprobarse localmente o en CI.
 

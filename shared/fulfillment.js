@@ -1,7 +1,7 @@
 import {categoryKey} from './catalog.js';
 import {fulfillmentChoice as exactChoice} from './order-engine.js';
 
-const mentions=/\b(?:voy a retirar|vamos a retirar|paso a buscar|paso a retirar|voy a buscar|vamos a buscar|voy a pasar a buscar|lo retiro|los retiro|retiro en el local|retirar en el local|para retirar|para llevar|para retiro|retiro|retirar|retirarlo|retiramos|retirare|recogerlo|buscarlo|envio a domicilio|a domicilio|para delivery|delivery|envialo a casa|traemelo a casa)\b/g;
+const mentions=/\b(?:voy a retirar|vamos a retirar|paso por el local(?: a (?:buscarlo|buscar|retirar))?|lo busco en el local|paso a buscar|paso a retirar|voy a buscar|vamos a buscar|voy a pasar a buscar|lo retiro|los retiro|retiro en el local|retirar en el local|para retirar|para llevar|para retiro|retiro|retirar|retirarlo|retiramos|retirare|recogerlo|buscarlo|envio a domicilio|a domicilio|para delivery|delivery|envialo a casa|traemelo a casa)\b/g;
 const delivery=/delivery|domicilio|envialo a casa|traemelo a casa/;
 const negative=/(?:^|\b)(?:no|sin|nunca)\s+(?:(?:voy|vamos|va|quiero|queremos|prefiero|necesito|pienso|me|te|interesa|interesan|gustaria|gusta|es|sera|seria|a|el|mi|pedido|para|por|favor)\s+)*$/;
 

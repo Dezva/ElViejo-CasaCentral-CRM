@@ -1,4 +1,5 @@
 import {mediaReceipt} from '../lib/whatsapp-media.mjs';
+import {businessName} from '../../shared/branch-identity.js';
 import {env,json,verifySignature,rpc,kick} from '../lib/platform.mjs';
 import {safeDiagnosticError} from '../lib/diagnostics.mjs';
 import {parseLocationMessage} from '../../shared/locations.js';
@@ -10,14 +11,14 @@ export default async request=>{
    if(url.searchParams.get('hub.mode')==='subscribe'&&challenge&&env('WHATSAPP_VERIFY_TOKEN')&&url.searchParams.get('hub.verify_token')===env('WHATSAPP_VERIFY_TOKEN'))return new Response(challenge);
    return json({error:'webhook_verification_failed'},403);
   }
-  return json({service:'Buffet El Viejo — Casa Central WhatsApp',ok:true,diagnostics_version:1,note:'Esta consulta GET solo comprueba que la función existe. Los mensajes reales llegan mediante POST desde Meta.'});
+  return json({service:businessName+' WhatsApp',ok:true,diagnostics_version:1,note:'Esta consulta GET solo comprueba que la función existe. Los mensajes reales llegan mediante POST desde Meta.'});
  }
  if(request.method!=='POST')return json({error:'method_not_allowed'},405);
  const raw=await request.text();if(raw.length>1000000)return json({error:'payload_too_large'},413);
  console.info('whatsapp_webhook_received',JSON.stringify({bytes:raw.length,signature_present:!!request.headers.get('x-hub-signature-256')}));
  if(!verifySignature(raw,request.headers.get('x-hub-signature-256'))){console.warn('whatsapp_signature_rejected',JSON.stringify({app_secret_configured:!!env('META_APP_SECRET')}));return json({error:'invalid_signature'},401);}
  let payload;try{payload=JSON.parse(raw);}catch{return json({error:'invalid_json'},400);}
- const counts={accepted:0,duplicates:0,ignored_numbers:0,status_events:0};
+ const counts={accepted:0,duplicates:0,ignored_numbers:0,ignored_stickers:0,status_events:0};
  try{
   for(const entry of payload.entry||[])for(const change of entry.changes||[]){
    const v=change.value;
@@ -30,6 +31,8 @@ export default async request=>{
    counts.status_events+=(v.statuses||[]).length;
    for(const m of v.messages||[]){
     if(!m.from||!m.id)continue;
+    // Un sticker no abre ni actualiza el chat, y tampoco genera trabajo para el asistente.
+    if(m.type==='sticker'){counts.ignored_stickers++;continue;}
     const profile=v.contacts?.find(c=>c.wa_id===m.from)?.profile?.name||'';
     if(m.type==='location'||m.type==='live_location'){
      const point=parseLocationMessage(m);

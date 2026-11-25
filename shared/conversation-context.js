@@ -11,6 +11,8 @@ import {deliveryStatusCommand,deliveryReferenceCommand,deliveryQueryRequested} f
 import {categoryKey,commercialText,productTerms,productName,sellable} from './catalog.js';
 import {matchCommercial,deterministicOrder,quantityWords,orderOperation,inlineFulfillment,orderText,clarifyOptions,quantityWarning,validQuantity} from './catalog-matching.js';
 const grammatical=new Set('producto productos porfa porfavor podes podria podrias traer traeme pasame preparame enviame mandame favor quiero quisiera necesito gustaria me el la lo los las un una uno y e para a mi agregar agrega agregame dame llevo llevar pedir pedido con sin bien caliente calientes frio fria queso sal azucar por favor gracias voy querer te dije al final total cambia cambiar solo solamente unicamente no'.split(' '));
+const quantityToken=`(?:\\d+|${Object.keys(quantityWords).join('|')})`;
+const quantityAlternatives=new RegExp(`\\b${quantityToken} o ${quantityToken}\\b`);
 export function categoryRequest(text,catalog,categories=[]){
  const t=commercialText(text),groups=categories.length?categories:[...new Map(catalog.filter(p=>p.category).map(p=>[p.category_id||p.category,{id:p.category_id||p.category,name:p.category,active:p.category_active!==false}])).values()];
  const hits=groups.filter(c=>c.active!==false&&commercialText(c.name)&&(' '+t+' ').includes(' '+commercialText(c.name)+' ')).sort((a,b)=>commercialText(b.name).length-commercialText(a.name).length);
@@ -30,9 +32,10 @@ export function compactContext(cart,candidates){
  const conversation={focus_ids,...(pending?{pending:{candidate_ids:pending.candidate_ids,qty:pending.qty,operation:pending.operation}}:{})};
  return {service:cart?.service||null,cart:(cart?.items||[]).map(x=>[x.variant_id,x.qty]),conversation,products:candidates.map(p=>[p.id,productName(p),p.aliases||[],p.service==='buffet'?!!p.available:sellable(p)])};
 }
-function quantityFollowup(text,cart,catalog){
- const t=commercialText(text),correct=/\b(?:solo|solamente|unicamente|al final|en total|no una|no uno|cambia|cambiame|corrige|corregi)\b/.test(t),increment=orderOperation(text)==='add'&&/\b(?:mas|otro|otra)\b/.test(t);
+function quantityFollowup(text,cart,catalog,found){
+ const t=commercialText(text),correct=/\b(?:solo|solamente|unicamente|al final|en total|no una|no uno|cambia|cambiame|corrige|corregi|mejor|dejame)\b/.test(t),increment=orderOperation(text)==='add'&&/\b(?:mas|otro|otra)\b/.test(t);
  if(!correct&&!increment)return null;
+ if(found.unknown.some(word=>!Object.hasOwn(quantityWords,word)&&!/^\d+$/.test(word)&&!['al','final','en','total','cambia','cambiame','corrige','corregi'].includes(word)))return null;
  const beforeNo=orderText(text),quantity=beforeNo.split(' ').map(x=>quantityWords[x]||(/^\d+$/.test(x)?Number(x):null)).find(x=>x!==null);
  if(quantity===undefined)return null;
  if(!validQuantity(quantity))return retryOrderCommand(quantityWarning);
@@ -63,6 +66,7 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(state.kind==='confirmation')return {intent:'summary'};
  if(/^(?:si|si por favor|si gracias|no|no gracias)$/.test(t))return {intent:'clarify',message:cart?.items?.length&&cart.fulfillment==='a_coordinar'?'¿Preferís retirar en el local o pedir delivery?':'Decime qué platos querés pedir o escribí MENÚ para ver las opciones.'};
  if(state.kind==='social')return {intent:'social',message:/^buen|^hola/.test(t)?null:/gracias/.test(t)?'¡Gracias a vos!':'De acuerdo. Cuando quieras, seguimos.'};
+ if(state.kind==='uncertain')return {intent:'clarify',message:'Tu borrador sigue guardado. Cuando decidas, decime qué querés agregar o cambiar.'};
 
  const price=referencePriceRequest(text,cart,catalog);
  if(price)return price;
@@ -70,7 +74,7 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  const reference=deliveryReferenceCommand(text,cart);
  if(reference)return reference;
  const category=categoryRequest(text,catalog,categories.length?categories:BUFFET_CATEGORIES);
- const asksMenu=/^(?:menu(?: hoy)?|carta|catalogo|que tienen(?: hoy)?|que hay(?: hoy)?)$/.test(t)||state.topic==='menu'||/\bmenu\b/.test(t)&&/\b(?:mostrame|solo|ensalada)\b/.test(t);
+ const asksMenu=state.topic==='menu'||/^(?:que tienen|que hay)(?: hoy)?$/.test(t)||/\bmenu\b/.test(t)&&/\b(?:mostrame|solo|ensalada)\b/.test(t);
  if(asksMenu&&/\bensalada\b/.test(t))return {intent:'menu',dish_ids:catalog.filter(p=>/\bensalada\b/.test(commercialText(p.name))).map(p=>p.id)};
  if(asksMenu||category&&!hasProducts&&(state.kind==='query'||category.category_names.some(name=>commercialText(name)===t)))return {intent:'menu',...category};
  if(['location','payments','hours','fulfillment'].includes(state.topic))return {intent:'info',topic:state.topic};
@@ -84,14 +88,15 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(mode.mentioned&&!mode.choice&&!hasProducts)return {intent:'clarify',message:'¿Preferís retirar en el local o pedir delivery? Tu borrador sigue guardado.'};
  if(mode.choice&&!hasProducts&&found.unknown.every(word=>['es','sera','prefiero','queremos','entonces','asi','perfecto'].includes(word))&&!/\b(?:agrega\w*|suma\w*|\d+)\b/.test(t))return {intent:'summary',fulfillment:mode.choice};
  if(/^(?:pago|pagare|voy a pagar|quiero pagar|prefiero pagar)\b/.test(t))return {intent:'payment'};
- if(/^\s*(?:no|nunca)\s+(?:quiero|agreg|sum|sac|quit|elimin|borr)/i.test(text))return {intent:'clarify',message:'Tu borrador sigue igual. Decime qué plato querés cambiar o quitar.'};
+ if((hasProducts&&found.unknown.includes('no'))||/^\s*(?:no|nunca)\s+(?:quiero|agreg|sum|sac|quit|elimin|borr)/i.test(text))return {intent:'clarify',message:'Tu borrador sigue igual. Decime qué plato querés cambiar o quitar.'};
  if(cart?.last_cart_request===cartRequestKey(text))return {intent:'repeat_cart'};
  const edit=cartOperationCommand(text,cart,catalog);
  if(edit)return edit;
  if(!catalog.length)return {intent:'menu'};
- if((state.kind==='purchase'||state.kind==='modification')&&quantityProblem(text))return invalidOrderCommand(text,cart,catalog);
+ if(hasProducts&&quantityAlternatives.test(t))return {intent:'clarify',message:'¿Con qué cantidad te quedás? Tu borrador sigue guardado.'};
+ if((hasProducts||state.kind==='purchase'||state.kind==='modification')&&quantityProblem(text))return invalidOrderCommand(text,cart,catalog);
  if(!hasProducts){
-  const followup=quantityFollowup(text,cart,catalog);
+  const followup=quantityFollowup(text,cart,catalog,found);
   if(followup)return followup;
  }
  const noteMatch=String(text).trim().match(/^(?:sin|bien|con (?:poc[oa]|much[oa]|extra)|nota:|observación:)\s+[^?¿]+$/i);
@@ -104,6 +109,7 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  const {command}=deterministicOrder(text,cart,catalog,found);
  if(command)return command;
  if(state.kind==='purchase'||state.kind==='modification')return invalidOrderCommand(text,cart,catalog);
+ if(state.kind==='product_mention')return {intent:'clarify',message:'¿Querés pedir ese plato o consultarme por él? Tu borrador sigue guardado.'};
  return null;
 }
 

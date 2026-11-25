@@ -1,6 +1,7 @@
 import {referencePriceRequest,referencePriceReply} from './reference-prices.js';
 import {deterministicConversation,cartRequestKey} from './conversation-context.js';
 import {deliveryMode} from './settings.js';
+import {businessName,branchName,branchReference} from './branch-identity.js';
 import {CATEGORY_IDS,categoryName} from './buffet-categories.js';
 import {normalize,isConfirmation} from './order-engine.js';
 import {fulfillmentChoice} from './fulfillment.js';
@@ -9,8 +10,8 @@ import {retryOrderCommand,repeatOrderPrompt} from './order-retry.js';
 import {deliveryReferenceCommand} from './delivery-context.js';
 export {normalize,isConfirmation,fulfillmentChoice};
 export const money=n=>n==null?'Pendiente':new Intl.NumberFormat('es-PY').format(n)+' Gs.';
-export const greeting='¡Buenas! Bienvenido a Buffet El Viejo — Casa Central. ¿Querés consultar nuestro menú del día o hacer un pedido?';
-export const defaults={"business_name":"Buffet El Viejo — Casa Central","branch":"Casa Central","business_address":"Ruta Guarambaré–Villeta, esquina Villetana, frente a IMPACO, Paraguay","logo_url":"assets/abuelito-provisional.png","timezone":"America/Asuncion","bot_enabled":false,"payment_methods":[],"fulfillment_modes":["retiro","delivery"],"schedules":{"buffet":{"days":[],"open":"","close":"","delivery_mode":"pending","delivery_open":null,"delivery_close":null}},"reference_prices":{"guarniciones":null,"carne":null,"pollo_chancho":null}};
+export const greeting=`¡Buenas! Bienvenido a ${businessName}. ¿Querés consultar nuestro menú del día o hacer un pedido?`;
+export const defaults={"business_name":businessName,"branch":branchName,"business_address":branchReference,"logo_url":"assets/abuelito-provisional.png","timezone":"America/Asuncion","bot_enabled":false,"payment_methods":[],"fulfillment_modes":["retiro","delivery"],"schedules":{"buffet":{"days":[],"open":"","close":"","delivery_mode":"pending","delivery_open":null,"delivery_close":null}},"reference_prices":{"guarniciones":null,"carne":null,"pollo_chancho":null}};
 export function localDate(now=new Date()){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Asuncion',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);}
 export function outsideBuffet(text){return /\bchiperia\b/.test(normalize(text));}
 export function emptyCart(name='',service='buffet'){return {items:[],service,customer_name:name,fulfillment:'a_coordinar',address:'',payment:'a_coordinar',quoted:false,delivery_location_id:null,saved_carts:{}};}
@@ -74,7 +75,7 @@ export function reduceOrder({text,cart:old,catalog,menus=[],command,profileName=
   cart={...preserved,items:[],subtotal:null,quoted:false,conversation:{retry_order:true}};
   return reply(message);
  };
- if(outsideBuffet(text))return reply('Este número corresponde exclusivamente a Buffet El Viejo — Casa Central.');
+ if(outsideBuffet(text))return reply(`Este número corresponde exclusivamente a ${businessName}.`);
  const list=activeCatalog(cart.service,catalog,menus,now);
  command??=demoCommand(text,cart,list);
  // Un resultado de interpretación no convierte un seguimiento de tarifa en una compra.

@@ -1,4 +1,4 @@
--- Casa Central: ubicación opcional en texto, pedidos y conciliación. Aplicar después de 015.
+-- Ruta Villeta–Alberdi: ubicación opcional en texto, pedidos y conciliación. Aplicar después de 015.
 begin;
 create or replace function public.guarni_process_location(p_token uuid,p_job uuid,p_reply_enabled boolean default false)
 returns jsonb language plpgsql security definer set search_path='' as $$
@@ -200,7 +200,7 @@ begin
     insert into public.guarni_messages(conversation_id,direction,actor,actor_id,body,status)
     values(c.id,'outbound','system',p_actor,left(
       case next_status
-      when 'accepted' then '*🍽️ BUFFET EL VIEJO — CASA CENTRAL*'||E'\n\n*Pedido #'||o.number||E' confirmado*\n\n*Productos solicitados:*\n'||
+      when 'accepted' then '*🍽️ BUFFET EL VIEJO — RUTA VILLETA–ALBERDI*'||E'\n\n*Pedido #'||o.number||E' confirmado*\n\n*Productos solicitados:*\n'||
        (select case when length(lines)>3200 then left(lines,3190)||E'\n…' else lines end from (select string_agg('- '||(x->>'qty')||' × '||(x->>'name'),E'\n') lines from jsonb_array_elements(q->'items') x) products)||
        E'\n\n*Importe acordado:* Gs. '||replace(to_char(amount,'FM999,999,999,990'),',','.')||
        case when o.fulfillment='delivery' then E'\n*Delivery:* Gs. '||replace(to_char(fee,'FM999,999,999,990'),',','.') else E'\nRetiro en el local' end||
@@ -277,7 +277,7 @@ end $$;
 drop trigger if exists viejo_order_stamps on public.guarni_orders;
 create trigger viejo_order_stamps before update on public.guarni_orders for each row execute function public.viejo_order_stamps();
 
--- Conserva la cadena de permisos y configuración de Casa Central. Reejecutable, sin renombrar de nuevo.
+-- Conserva la cadena de permisos y configuración de Ruta Villeta–Alberdi. Reejecutable, sin renombrar de nuevo.
 do $$begin
  if to_regprocedure('public.viejo_staff_casa_base(uuid,text,jsonb)') is null then
   alter function public.viejo_staff(uuid,text,jsonb) rename to viejo_staff_casa_base;

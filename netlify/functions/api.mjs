@@ -1,4 +1,5 @@
 import {validateSettings} from '../../shared/settings.js';
+import {normalizeBranchIdentity,branchMessageBody} from '../../shared/branch-identity.js';
 import {validateMenuItems} from '../../shared/buffet-categories.js';
 import {canEditMenu} from '../../shared/permissions.js';
 import {env,db,rpc,member,json,kick} from '../lib/platform.mjs';
@@ -46,7 +47,10 @@ export default async request=>{
     if(messages.length){
      const locations=await db('/rest/v1/guarni_locations?message_id=in.('+messages.map(message=>message.id).join(',')+')');
      const byMessage=new Map(locations.map(location=>[location.message_id,location]));
-     for(const message of messages)if(byMessage.has(message.id))message.location=byMessage.get(message.id);
+     for(const message of messages){
+      message.body=branchMessageBody(message);
+      if(byMessage.has(message.id))message.location=byMessage.get(message.id);
+     }
     }
     return json({messages:messages.reverse()});
    }
@@ -57,7 +61,7 @@ export default async request=>{
     db('/rest/v1/guarni_settings?id=eq.true'),
     db('/rest/v1/crm_members?select=user_id,display_name,role,catalog_editor,menu_editor'),db('/rest/v1/viejo_menus?select=id,day,status,items,created_by,created_at,photo_id,has_legacy_image&order=created_at.desc&limit=90'),db('/rest/v1/viejo_history?order=created_at.desc&limit=2000'),rpc('viejo_pending_orders',{})
    ]);
-   return json({photoStorageEnabled:env('MENU_PHOTO_STORAGE_ENABLED')==='true',member:m,clients,conversations,orders,catalog:[],pendingOrders,settings:{...settings[0]?.config},members,menus,history});
+   return json({photoStorageEnabled:env('MENU_PHOTO_STORAGE_ENABLED')==='true',member:m,clients,conversations,orders,catalog:[],pendingOrders,settings:normalizeBranchIdentity(settings[0]?.config),members,menus,history});
   }
   if(request.method!=='POST')return json({error:'method_not_allowed'},405);
   const raw=await request.text();if(raw.length>4500000)return json({error:'Solicitud demasiado grande.'},413);
