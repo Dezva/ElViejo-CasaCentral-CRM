@@ -133,6 +133,8 @@ test('Casa Central registra un buffet conversacional en PostgreSQL sin importes 
   ['Capaz pida un tallarín más tarde',/borrador sigue guardado/],
   ['¿Me anotás dos o tres tallarines?',/qué cantidad/],
   ['Mi hijo come tallarín',/pedir ese plato o consultarme/],
+  ['Hola, no quiero una milanesa',/borrador sigue igual/],
+  ['Quiero tallarín, no milanesa',/borrador sigue igual/],
   ['¿Dónde están ubicados?',/Dirección de prueba 123/],
   ['¿Hasta qué hora atienden?',/Horario de atención pendiente/],['¿Tienen delivery?',/equipo.*delivery/],
   ['¿Puedo pagar por transferencia?',/Transferencia/],['¿Tienen tallarín?',/disponible/],

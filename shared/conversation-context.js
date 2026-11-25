@@ -88,7 +88,7 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(mode.mentioned&&!mode.choice&&!hasProducts)return {intent:'clarify',message:'¿Preferís retirar en el local o pedir delivery? Tu borrador sigue guardado.'};
  if(mode.choice&&!hasProducts&&found.unknown.every(word=>['es','sera','prefiero','queremos','entonces','asi','perfecto'].includes(word))&&!/\b(?:agrega\w*|suma\w*|\d+)\b/.test(t))return {intent:'summary',fulfillment:mode.choice};
  if(/^(?:pago|pagare|voy a pagar|quiero pagar|prefiero pagar)\b/.test(t))return {intent:'payment'};
- if(/^\s*(?:no|nunca)\s+(?:quiero|agreg|sum|sac|quit|elimin|borr)/i.test(text))return {intent:'clarify',message:'Tu borrador sigue igual. Decime qué plato querés cambiar o quitar.'};
+ if((hasProducts&&found.unknown.includes('no'))||/^\s*(?:no|nunca)\s+(?:quiero|agreg|sum|sac|quit|elimin|borr)/i.test(text))return {intent:'clarify',message:'Tu borrador sigue igual. Decime qué plato querés cambiar o quitar.'};
  if(cart?.last_cart_request===cartRequestKey(text))return {intent:'repeat_cart'};
  const edit=cartOperationCommand(text,cart,catalog);
  if(edit)return edit;
