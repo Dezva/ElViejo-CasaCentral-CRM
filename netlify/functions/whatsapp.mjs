@@ -17,7 +17,7 @@ export default async request=>{
  console.info('whatsapp_webhook_received',JSON.stringify({bytes:raw.length,signature_present:!!request.headers.get('x-hub-signature-256')}));
  if(!verifySignature(raw,request.headers.get('x-hub-signature-256'))){console.warn('whatsapp_signature_rejected',JSON.stringify({app_secret_configured:!!env('META_APP_SECRET')}));return json({error:'invalid_signature'},401);}
  let payload;try{payload=JSON.parse(raw);}catch{return json({error:'invalid_json'},400);}
- const counts={accepted:0,duplicates:0,ignored_numbers:0,status_events:0};
+ const counts={accepted:0,duplicates:0,ignored_numbers:0,ignored_stickers:0,status_events:0};
  try{
   for(const entry of payload.entry||[])for(const change of entry.changes||[]){
    const v=change.value;
@@ -30,6 +30,8 @@ export default async request=>{
    counts.status_events+=(v.statuses||[]).length;
    for(const m of v.messages||[]){
     if(!m.from||!m.id)continue;
+    // Un sticker no abre ni actualiza el chat, y tampoco genera trabajo para el asistente.
+    if(m.type==='sticker'){counts.ignored_stickers++;continue;}
     const profile=v.contacts?.find(c=>c.wa_id===m.from)?.profile?.name||'';
     if(m.type==='location'||m.type==='live_location'){
      const point=parseLocationMessage(m);
