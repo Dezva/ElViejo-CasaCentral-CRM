@@ -68,7 +68,9 @@ test('Entrega sin referencia, confirmación humana, cobro, reembolso y eliminaci
   await c.staff('take', { id: order.conversation_id });
   await assert.rejects(c.staff('order_status', { ...confirm, location_reviewed: false }), /location_review_required/);
   await c.staff('order_status', confirm);
-  assert.match((await c.one("select body from guarni_messages where body like '%confirmado%' order by created_at desc limit 1")).body, /Total confirmado: Gs\. 48\.000/);
+  const { body: confirmation } = await c.one("select body from guarni_messages where body like '%confirmado%' order by created_at desc limit 1");
+  assert.match(confirmation, /^\*🍽️ BUFFET EL VIEJO — RUTA VILLETA–ALBERDI\*/);
+  assert.match(confirmation, /Total confirmado: Gs\. 48\.000/);
   for (const status of ['preparing', 'ready', 'out_for_delivery', 'delivered']) await c.staff('order_status', { id: order.id, status });
   const finance = () => c.rpc('viejo_financial_summary', [c.admin, 'month', null, null, 'buffet']);
   assert.equal((await finance()).completed_amount, 48000);

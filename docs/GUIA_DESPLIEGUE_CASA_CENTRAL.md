@@ -1,10 +1,10 @@
-# Guía de despliegue de Buffet El Viejo — Casa Central
+# Guía de despliegue de Buffet El Viejo — Ruta Villeta–Alberdi
 
-Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Casa Central. La rama para **Production branch** en Netlify es `release/casa-central-buffet`. En esta guía, el primer sitio publicado es de **prueba aislada**, aunque Netlify llame a ese contexto *Production*. La activación para clientes requiere la aprobación del responsable. Podés completar todas las etapas desde los paneles web con los archivos del repositorio.
+Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Ruta Villeta–Alberdi. La rama para **Production branch** en Netlify es `release/casa-central-buffet`. En esta guía, el primer sitio publicado es de **prueba aislada**, aunque Netlify llame a ese contexto *Production*. La activación para clientes requiere la aprobación del responsable. Podés completar todas las etapas desde los paneles web con los archivos del repositorio.
 
 ## A. Supabase
 
-1. En Supabase, creá un proyecto nuevo para Casa Central. En **SQL Editor → New query**, pegá y ejecutá el contenido completo de un archivo por consulta. Esperá el resultado de cada consulta antes de pasar al siguiente.
+1. En Supabase, creá un proyecto nuevo para Ruta Villeta–Alberdi. En **SQL Editor → New query**, pegá y ejecutá el contenido completo de un archivo por consulta. Esperá el resultado de cada consulta antes de pasar al siguiente.
 2. Ejecutá los archivos de la carpeta `database/` en este orden:
 
    1. `001_base_crm.sql`
@@ -20,7 +20,7 @@ Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Ca
    11. `015_historial_casa_central.sql`
    12. `016_pedidos_finanzas_buffet.sql`
 
-   Omití 003, un marcador histórico, y 004, un ejemplo de alta. Los números 008 y 012 correspondían al catálogo de chipería excluido de Casa Central. Los nombres internos históricos identifican estructuras reutilizadas. Para fotos privadas aplicá, al final, `database/storage/001_menu_private_bucket.sql` y confirmá en **Storage** que el bucket `el-viejo-menu-private` es privado.
+   Omití 003, un marcador histórico, y 004, un ejemplo de alta. Los números 008 y 012 correspondían al catálogo de chipería excluido de Ruta Villeta–Alberdi. Los nombres internos históricos identifican estructuras reutilizadas. Para fotos privadas aplicá, al final, `database/storage/001_menu_private_bucket.sql` y confirmá en **Storage** que el bucket `el-viejo-menu-private` es privado.
 
 3. En **Authentication → Users**, invitá a la persona administradora o creá su usuario según el procedimiento interno. Copiá su UUID. En **SQL Editor**, pegá esta consulta y reemplazá los dos marcadores por el UUID y el nombre de la persona:
 
@@ -108,7 +108,7 @@ Usá un proyecto Supabase, un sitio Netlify y un número de prueba propios de Ca
 
 ## E. WhatsApp
 
-1. En **Meta for Developers**, seleccioná o creá una aplicación del negocio para Casa Central y agregá WhatsApp. En **WhatsApp → API Setup**, seleccioná el número de prueba, copiá el **Phone Number ID** y agregá un destinatario de prueba autorizado si Meta lo exige.
+1. En **Meta for Developers**, seleccioná o creá una aplicación del negocio para Ruta Villeta–Alberdi y agregá WhatsApp. En **WhatsApp → API Setup**, seleccioná el número de prueba, copiá el **Phone Number ID** y agregá un destinatario de prueba autorizado si Meta lo exige.
 2. En Netlify, copiá el ID a `WHATSAPP_PHONE_NUMBER_ID` y el token autorizado para ese número a `WHATSAPP_TOKEN`. En Meta **App settings → Basic**, obtené el **App Secret** y guardalo como `META_APP_SECRET`. Generá un Verify Token propio y guardalo como `WHATSAPP_VERIFY_TOKEN`. En `WHATSAPP_GRAPH_VERSION`, usá la versión vigente aprobada para la app en formato `vNN.N`. Guardá todo en Functions. Revisá vencimiento del token y permisos del activo.
 3. En **WhatsApp → Configuration**, registrá la URL HTTPS del sitio seguida de `/.netlify/functions/whatsapp`. Introducí el mismo Verify Token. Guardá y suscribí el campo **messages** del objeto **WhatsApp Business Account** para ese número. Un GET normal solo prueba presencia. La validación de Meta debe devolver su desafío y la recepción real debe producir un POST firmado.
 4. Enviá un mensaje desde el destinatario de prueba y comprobá que aparece en **Conversaciones**. Si no llega, revisá la suscripción, el Phone Number ID, la firma y los registros de Functions. Para verificar envío, con autorización de prueba habilitá `WHATSAPP_SEND_ENABLED=true`, desplegá, iniciá una conversación desde el teléfono de prueba y respondé desde el CRM. Confirmá que llega al teléfono. Si falla, revisá ID, versión, token, destinatario, permisos y ventana de atención.

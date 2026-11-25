@@ -1,4 +1,5 @@
 import {mediaDisposition} from './whatsapp-media.mjs';
+import {normalizeBranchIdentity,branchMessageBody} from '../../shared/branch-identity.js';
 import {registeredOrderCommand} from '../../shared/order-status.js';
 import {hydrateDeliveryLocation,registeredDeliveryCommand} from '../../shared/delivery-context.js';
 import {deterministicConversation} from '../../shared/conversation-context.js';
@@ -18,7 +19,7 @@ async function send(job,token){
  if(env('WHATSAPP_SEND_ENABLED')!=='true'){status='failed';error='Envíos reales desactivados por configuración.';}
  else if(!version||!phone||!key){status='failed';error='Falta configurar WhatsApp.';}
  else try{
-  const r=await fetch(`https://graph.facebook.com/${version}/${phone}/messages`,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({messaging_product:'whatsapp',recipient_type:'individual',to:c.wa_id,type:'text',text:{preview_url:false,body:m.body}}),signal:AbortSignal.timeout(15000)});
+  const r=await fetch(`https://graph.facebook.com/${version}/${phone}/messages`,{method:'POST',headers:{authorization:'Bearer '+key,'content-type':'application/json'},body:JSON.stringify({messaging_product:'whatsapp',recipient_type:'individual',to:c.wa_id,type:'text',text:{preview_url:false,body:branchMessageBody(m)}}),signal:AbortSignal.timeout(15000)});
   const data=await r.json().catch(()=>({}));
   if(r.ok&&data.messages?.[0]?.id){status='sent';external=data.messages[0].id;}
   else {status=r.status>=500?'uncertain':'failed';error='WhatsApp no confirmó el envío (HTTP '+r.status+'). Revisar antes de reenviar.';}
@@ -39,7 +40,7 @@ export async function runWorker({budgetMs=45000}={}){
     continue;
    }
    const settings=await db('/rest/v1/guarni_settings?id=eq.true');
-   const config={...defaults,...settings[0]?.config};
+   const config=normalizeBranchIdentity({...defaults,...settings[0]?.config});
    const botEnabled=env('BOT_ENABLED')==='true'&&config.bot_enabled===true;
    if(['location','invalid_location','live_location'].includes(job.message.content_type)){
     await rpc('guarni_process_location',{p_token:token,p_job:job.job.id,p_reply_enabled:botEnabled});

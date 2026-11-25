@@ -10,4 +10,4 @@ if(config.publishableKey&& !config.publishableKey.startsWith('sb_publishable_'))
 await writeFile(new URL('config.js',dist),'window.VIEJO_CONFIG='+JSON.stringify(config)+';\n');
 // No SQL generation at build time; migration files remain stable.
 await writeFile(new URL('defaults.json',dist),JSON.stringify(defaults));
-console.log(`Build Buffet El Viejo — Casa Central`);
+console.log(`Build ${defaults.business_name}`);

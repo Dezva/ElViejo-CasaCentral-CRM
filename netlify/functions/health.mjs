@@ -1,5 +1,6 @@
 import { env, json, member, db, rpc } from '../lib/platform.mjs';
 import { providerConfig } from '../../shared/ai-provider.js';
+import {businessName} from '../../shared/branch-identity.js';
 
 function configuration(required, enabled = true, valid = true) {
   const missing = required.filter(names => !names.split(' o ').some(name => env(name).trim()));
@@ -53,7 +54,7 @@ export default async function health(request) {
   }
 
   return json({
-    service: 'Buffet El Viejo — Casa Central',
+    service: businessName,
     flags,
     services,
     note: 'La presencia de variables no comprueba conectividad. POST con sesión de administrador verifica solo Supabase. Las demás integraciones requieren pruebas independientes.',
