@@ -64,8 +64,8 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(/^(?:si|si por favor|si gracias|no|no gracias)$/.test(t))return {intent:'clarify',message:cart?.items?.length&&cart.fulfillment==='a_coordinar'?'¿Preferís retirar en el local o pedir delivery?':'Decime qué platos querés pedir o escribí MENÚ para ver las opciones.'};
  if(state.kind==='social')return {intent:'social',message:/^buen|^hola/.test(t)?null:/gracias/.test(t)?'¡Gracias a vos!':'De acuerdo. Cuando quieras, seguimos.'};
 
- const explicitPrice=referencePriceRequest(text);
- if(explicitPrice)return explicitPrice;
+ const price=referencePriceRequest(text,cart,catalog);
+ if(price)return price;
  if(orderStatusRequested(text))return cart?.items?.length?{intent:'draft_status'}:{intent:'registered_status'};
  const reference=deliveryReferenceCommand(text,cart);
  if(reference)return reference;
@@ -84,7 +84,6 @@ export function deterministicConversation(text,cart,catalog,{categories=[]}={}){
  if(mode.mentioned&&!mode.choice&&!hasProducts)return {intent:'clarify',message:'¿Preferís retirar en el local o pedir delivery? Tu borrador sigue guardado.'};
  if(mode.choice&&!hasProducts&&found.unknown.every(word=>['es','sera','prefiero','queremos','entonces','asi','perfecto'].includes(word))&&!/\b(?:agrega\w*|suma\w*|\d+)\b/.test(t))return {intent:'summary',fulfillment:mode.choice};
  if(/^(?:pago|pagare|voy a pagar|quiero pagar|prefiero pagar)\b/.test(t))return {intent:'payment'};
- if(referencePriceRequest(text,cart,catalog))return {intent:'reference_prices'};
  if(/^\s*(?:no|nunca)\s+(?:quiero|agreg|sum|sac|quit|elimin|borr)/i.test(text))return {intent:'clarify',message:'Tu borrador sigue igual. Decime qué plato querés cambiar o quitar.'};
  if(cart?.last_cart_request===cartRequestKey(text))return {intent:'repeat_cart'};
  const edit=cartOperationCommand(text,cart,catalog);

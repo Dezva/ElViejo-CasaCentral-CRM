@@ -105,6 +105,7 @@ export function reduceOrder({text,cart:old,catalog,menus=[],command,profileName=
  }
 
  const updating=intent==='update_cart'||intent==='cart_edit';
+ if(intent==='repeat_cart')delete cart.reference_price_context;
  if(updating){
   try{
    const updated=intent==='cart_edit'?{items:command.items,subtotal:null}:quote(command.items,cart.service,list);
