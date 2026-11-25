@@ -10,6 +10,7 @@ import { databaseV11, mockEnvironment, restBridge } from './v11-helpers.mjs';
 const dishes = [
   { id: 'tallarin', name: 'Tallarín', category_id: 'guarniciones', available: true },
   { id: 'milanesa', name: 'Milanesa de pollo', category_id: 'pollo_chancho', available: true },
+  { id: 'sopa', name: 'Sopa paraguaya', category_id: 'guarniciones', available: true },
   { id: 'lasaña', name: 'Lasaña de carne', category_id: 'guarniciones', available: true },
   { id: 'bife', name: 'Bife encebollado', category_id: 'carne', available: false },
   { id: 'pastel', name: 'Pastel', category_id: 'pending', available: false },
@@ -173,4 +174,93 @@ test('WhatsApp utiliza cambios del CRM y solo registra solicitudes pendientes co
     id: order.id, status: 'accepted', fulfillment: 'delivery', expected_items: order.items,
     location_reviewed: true, schedule_reviewed: true, shipping_fee: 0, price_agreed: true,
   }), /agreed_buffet_amount_required/);
+});
+
+test('WhatsApp distingue seguimientos de tarifas y compras con cantidades, sin perder un borrador previo', async t => {
+  const context = await databaseV11({ casa: true });
+  t.after(() => context.db.close());
+  t.after(mockEnvironment());
+  t.mock.method(globalThis, 'fetch', restBridge(context).fetch);
+  await context.staff('settings', { config: { ...settings, bot_enabled: true } });
+  await context.staff('menu', menu());
+
+  const general = '¿Cuáles son los precios por kilo?';
+  const purchases = [
+    ['Una milanesa de pollo.', { milanesa: 1 }],
+    ['Un tallarín.', { tallarin: 1 }],
+    ['Dos tallarines.', { tallarin: 2 }],
+    ['2 milanesas de pollo.', { milanesa: 2 }],
+    ['Voy a querer una milanesa.', { milanesa: 1 }],
+    ['La milanesa de pollo sin cebolla.', { milanesa: 1 }, 'sin cebolla'],
+    ['Quiero dos tallarines y una sopa paraguaya.', { tallarin: 2, sopa: 1 }],
+  ];
+  const queries = [
+    ['Del tallarín.', /Tallarín.*Guarniciones.*Gs\. 39\.500 por kilo/],
+    ['¿Y la milanesa de pollo?', /Milanesa de pollo.*Gs\. 47\.500 por kilo/],
+    ['¿Cuánto cuesta el kilo de carne?', /Carne — Gs\. 51\.000 por kilo/],
+    ['¿Y las guarniciones?', /Guarniciones — Gs\. 39\.500 por kilo/],
+    ['¿Cuánto cuesta un kilo de carne?', /Carne — Gs\. 51\.000 por kilo/],
+    ['¿Cuánto cuestan 2,5 kg de carne?', /Carne — Gs\. 51\.000 por kilo/],
+    ['¿Y 2 kilos de carne?', /Carne — Gs\. 51\.000 por kilo/],
+    ['¿Tienen tallarín?', /disponible en el menú de hoy/],
+  ];
+
+  const inbound = async (text, phone) => {
+    const message = await context.rpc('guarni_ingest', [randomUUID(), phone, 'Prueba', text]);
+    const id = message.conversation_id;
+    await runWorker();
+    const { cart } = await context.one('select cart from guarni_conversations where id=$1', [id]);
+    const { body } = await context.one("select body from guarni_messages where conversation_id=$1 and direction='outbound' order by created_at desc,id desc limit 1", [id]);
+    return { id, cart, body };
+  };
+  const assertPurchase = (result, quantities) => {
+    assert.deepEqual(Object.fromEntries(result.cart.items.map(item => [item.variant_id, item.qty])), { lasaña: 1, ...quantities });
+    assert.equal(result.cart.items[0].notes, 'sin picante');
+    assert.equal(result.cart.reference_price_context, undefined);
+    assert.equal(result.cart.subtotal, null);
+    assert.ok(result.cart.items.every(item => item.unit_price === null));
+    assert.match(result.body, /Importe pendiente/);
+    assert.doesNotMatch(result.body, /Gs\./);
+  };
+
+  for (const [index, [purchase, quantities, notes]] of purchases.entries()) {
+    const phone = '59500000040' + index;
+    const before = await inbound('Quiero una lasaña de carne sin picante.', phone);
+    const initial = await inbound(general, phone);
+    assert.match(initial.body, /tarifas de referencia por kilo/);
+    assert.deepEqual(initial.cart, { ...before.cart, reference_price_context: true });
+
+    for (const [query, expected] of index === 0 ? queries : queries.slice(0, 1)) {
+      const result = await inbound(query, phone);
+      assert.match(result.body, expected, query);
+      assert.equal(result.body.includes('Gs. 102.000'), false);
+      assert.deepEqual(result.cart, initial.cart, query);
+    }
+
+    const purchased = await inbound(purchase, phone);
+    assertPurchase(purchased, quantities);
+    if (notes) assert.equal(purchased.cart.items.find(item => item.variant_id === 'milanesa').notes, notes);
+    if (index !== purchases.length - 1) continue;
+    await inbound(general, phone);
+    assertPurchase(await inbound(purchase, phone), quantities);
+
+    await inbound('Retiro', phone);
+    const confirmation = await inbound('CONFIRMAR PEDIDO', phone);
+    assert.match(confirmation.body, /PENDIENTE DE ACEPTACIÓN/);
+    const order = await context.one('select * from guarni_orders where conversation_id=$1', [confirmation.id]);
+    assert.equal(order.status, 'pending');
+    assert.equal(order.subtotal, null);
+    assert.equal(order.total, null);
+    assert.ok(order.items.every(item => item.unit_price === null));
+
+    await context.staff('take', { id: confirmation.id });
+    const acceptance = {
+      id: order.id, status: 'accepted', fulfillment: 'retiro', expected_items: order.items,
+      expected_version: order.version, schedule_reviewed: true, price_agreed: true,
+    };
+    await assert.rejects(context.staff('order_status', acceptance), /agreed_buffet_amount_required/);
+    assert.equal((await context.one('select total from guarni_orders where id=$1', [order.id])).total, null);
+    await context.staff('order_status', { ...acceptance, buffet_amount: 24000 });
+    assert.deepEqual(await context.one('select status,total from guarni_orders where id=$1', [order.id]), { status: 'accepted', total: 24000 });
+  }
 });
